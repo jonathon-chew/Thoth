@@ -21,7 +21,7 @@ A language agnostic tool for turning TODO lines / comments in a code base into o
 
    ```bash
    git clone https://github.com/jonathon-chew/Thoth.git
-   cd snitch 
+   cd Thoth 
    ```
 
 2. Compile the script:
