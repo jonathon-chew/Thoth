@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -45,6 +46,7 @@ type GithubIssueResponse struct {
 	} `json:"user"`
 	Labeles            []string   `json:"labels"`
 	State              string     `json:"state"`
+	State_Reason       string     `json:"state_reason"`
 	Locked             bool       `json:"locked"`
 	Assignee           Assignee   `json:"assignee"`
 	Assignees          []Assignee `json:"assignees"`
@@ -93,15 +95,19 @@ func genericGitRequest() (OWNER string, REPO string, TOKEN string, err error) {
 		return "", "", "", err
 	}
 
-	// https://github.com/OWNER/REPO.git
-	gitUrl := strings.ReplaceAll(remoteOrigin, ".git", "")
-	gitDetails := strings.Split(strings.ReplaceAll(gitUrl, "https://github.com/", ""), "/")
+	if strings.Contains(remoteOrigin, "github") {
+		// https://github.com/OWNER/REPO.git
+		gitUrl := strings.ReplaceAll(remoteOrigin, ".git", "")
+		gitDetails := strings.Split(strings.ReplaceAll(gitUrl, "https://github.com/", ""), "/")
 
-	OWNER = gitDetails[0]
-	REPO = strings.Replace(gitDetails[1], "\n", "", -1)
-	TOKEN = os.Getenv("GH_PERSONAL_TOKEN")
+		OWNER = gitDetails[0]
+		REPO = strings.Replace(gitDetails[1], "\n", "", -1)
+		TOKEN = os.Getenv("GH_PERSONAL_TOKEN")
 
-	return OWNER, REPO, TOKEN, nil
+		return OWNER, REPO, TOKEN, nil
+	} else {
+		return "", "", "", errors.New(fmt.Sprintf("The remote origin is not github, and the ability to create issues for %s is not currently implimented.", remoteOrigin))
+	}
 }
 
 func ListGithubIssues() ([]GithubIssueResponse, error) {
@@ -152,7 +158,7 @@ func ListGithubIssues() ([]GithubIssueResponse, error) {
 	}
 
 	// (#3) TODO: Check to see if this works properly, testing returns wrong?!
-	if ResponseInstance[0].Status != "200" && len(ResponseInstance[0].Status) > 0{
+	if ResponseInstance[0].Status != "200" && len(ResponseInstance[0].Status) > 0 {
 		CustomResponseError := fmt.Errorf("There was an error getting the github issues, %s\n", ResponseInstance[0].Message)
 		return ResponseInstance, CustomResponseError
 	}
@@ -217,5 +223,71 @@ func MakeGithubIssue(TITLE, BODY string) error {
 }
 
 // (#2) TODO: Add the ability to remove to dos which have been closed on github
+func RemoveLineDueToGithubIssue(line string) (bool, error) {
+
+	// Get the list of issues
+	foundGithubIssues, err := ListGithubIssues()
+	if err != nil {
+		return false, errors.New(fmt.Sprintf("Unable to get a list of GithubIssues, %s\n", err))
+	}
+
+	// Loop through the issues and compare to the line
+	for _, issue := range foundGithubIssues {
+		if strings.Contains(strings.TrimSpace(line), issue.Title[5:]) {
+			err := CloseGithubIssue(&issue)
+			if err != nil {
+				return true, err // trying this out - as first half the of the function was "completed" successfully but the second half wasn't!
+			}
+			return true, nil
+		}
+	}
+
+	// If the loop didn't find anything return false and no error!
+	return false, nil
+}
 
 // (#3) TODO: Add the ability to close issues on github which have been removed from the code base
+
+func CloseGithubIssue(closeIssue *GithubIssueResponse) error {
+
+	// Put together the JSON message required to close an issue
+	closeIssue.State        = "closed"
+	closeIssue.State_Reason = "completed"
+
+	OWNER, REPO, TOKEN, err := genericGitRequest()
+	if err != nil {
+		return err
+	}
+
+	// Convert the struct into JSON using the tags and Marshal
+	jsonData, err := json.Marshal(closeIssue)
+	if err != nil {
+		return err
+	}
+
+	// Convert the JSON into bytes
+	requestBody := bytes.NewBuffer(jsonData)
+
+	request, err := http.NewRequest("PATCH", fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d", OWNER, REPO, closeIssue.Number), requestBody)
+	if err != nil {
+		return err
+	}
+
+	request.Header.Set("Accept", "application/vnd.github+json")
+	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	request.Header.Set("Authorization", fmt.Sprintf("token %s", TOKEN))
+
+	client := http.Client{}
+
+	closeGithubIssueResponse, clientErr := client.Do(request)
+	if clientErr != nil {
+		fmt.Printf("The response from github was: %s\n", GithubStatusResponseMeanings[closeGithubIssueResponse.Status])
+		return clientErr
+	}
+
+	fmt.Printf("The response from github was: %s\n", GithubStatusResponseMeanings[closeGithubIssueResponse.Status])
+
+	// Return if error?
+	return nil
+
+}
