@@ -10,6 +10,13 @@ import (
 
 func main() {
 
+	for _, i := range os.Args[1:] {
+		if i == "--version" {
+			fmt.Printf("v0.0.1\n")
+			os.Exit(0)
+		}
+	}
+
 	// Look for all the file in the current directory, but not the sub folders!
 	var files, issue = os.Open(".")
 	if issue != nil {
@@ -82,8 +89,8 @@ func main() {
 
 		var unwantedExtention bool = false
 
-		for _, extension := range unwantedExtentions{ // ignore binary files!
-			if strings.Contains(filePath, extension){
+		for _, extension := range unwantedExtentions { // ignore binary files!
+			if strings.Contains(filePath, extension) {
 				unwantedExtention = true
 			}
 		}

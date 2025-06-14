@@ -174,6 +174,7 @@ func ListGithubIssues() ([]GithubIssueResponse, error) {
 
 func MakeGithubIssue(TITLE, BODY string) error {
 
+	// Get the credentials required
 	OWNER, REPO, TOKEN, err := genericGitRequest()
 	if err != nil {
 		return err
@@ -223,17 +224,11 @@ func MakeGithubIssue(TITLE, BODY string) error {
 }
 
 // (#2) TODO: Add the ability to remove to dos which have been closed on github
-func RemoveLineDueToGithubIssue(line string) (bool, error) {
-
-	// Get the list of issues
-	foundGithubIssues, err := ListGithubIssues()
-	if err != nil {
-		return false, errors.New(fmt.Sprintf("Unable to get a list of GithubIssues, %s\n", err))
-	}
+func RemoveLineDueToGithubIssue(line string, foundGithubIssues []GithubIssueResponse) (bool, error) {
 
 	// Loop through the issues and compare to the line
 	for _, issue := range foundGithubIssues {
-		if strings.Contains(strings.TrimSpace(line), issue.Title[5:]) {
+		if strings.Contains(strings.TrimSpace(line), issue.Title) {
 			err := CloseGithubIssue(&issue)
 			if err != nil {
 				return true, err // trying this out - as first half the of the function was "completed" successfully but the second half wasn't!
@@ -254,6 +249,7 @@ func CloseGithubIssue(closeIssue *GithubIssueResponse) error {
 	closeIssue.State        = "closed"
 	closeIssue.State_Reason = "completed"
 
+	// Get the credentials
 	OWNER, REPO, TOKEN, err := genericGitRequest()
 	if err != nil {
 		return err
@@ -268,17 +264,20 @@ func CloseGithubIssue(closeIssue *GithubIssueResponse) error {
 	// Convert the JSON into bytes
 	requestBody := bytes.NewBuffer(jsonData)
 
+	// Write the request
 	request, err := http.NewRequest("PATCH", fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d", OWNER, REPO, closeIssue.Number), requestBody)
 	if err != nil {
 		return err
 	}
 
+	// Set the required headers
 	request.Header.Set("Accept", "application/vnd.github+json")
 	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
 	request.Header.Set("Authorization", fmt.Sprintf("token %s", TOKEN))
 
 	client := http.Client{}
 
+	// Make the request
 	closeGithubIssueResponse, clientErr := client.Do(request)
 	if clientErr != nil {
 		fmt.Printf("The response from github was: %s\n", GithubStatusResponseMeanings[closeGithubIssueResponse.Status])
