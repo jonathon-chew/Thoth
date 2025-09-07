@@ -124,6 +124,7 @@ func genericGitRequest() (Credentials, error) {
 
 func ListGithubIssues() ([]GithubIssueResponse, error) {
 
+	// (#5) TODO: Check why this is only returning open issues? This might not be the problem but seems to be returning ONLY open issues which is meaning the number of the issue is wrong! You can have 2 number 3 open for example!!
 	var ResponseInstance []GithubIssueResponse
 
 	GitCredentials, err := genericGitRequest()
@@ -170,15 +171,15 @@ func ListGithubIssues() ([]GithubIssueResponse, error) {
 	}
 
 	// (#3) TODO: Check to see if this works properly, testing returns wrong?!
-	if ResponseInstance[0].StatusCode != 200 && len(ResponseInstance[0].StatusCode) > 0 {
+	if ResponseInstance[0].Status != "200" && len(ResponseInstance[0].Status) > 0 {
 		CustomResponseError := fmt.Errorf("There was an error getting the github issues, %s\n", ResponseInstance[0].Message)
 		return ResponseInstance, CustomResponseError
 	}
 
 	// fmt.Printf("ResponseInstance: %v\n\n", ResponseInstance)
 
-	for _, i := range ResponseInstance {
-		fmt.Println("The title for the response is: ", strings.TrimSpace(i.Title), " with ID: ", i.Id)
+	for _, response := range ResponseInstance {
+		fmt.Println("The title for the response is: ", strings.TrimSpace(response.Title), " with ID: ", response.Id)
 	}
 
 	return ResponseInstance, nil
