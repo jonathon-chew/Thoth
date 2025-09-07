@@ -22,7 +22,7 @@ func TestListIssues(t *testing.T) {
 	}
 
 	for _, i := range returned{
-		t.Logf("The title from the API was: %v\n", i.Title)
+		t.Logf("From the test file: The title from the API was: %v\n", i.Title)
 	}
 
 }

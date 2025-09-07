@@ -90,6 +90,7 @@ func main() {
 		}
 
 		var unwantedExtention bool = false
+		var updatedFile bool = false 
 
 		for _, extension := range unwantedExtentions { // ignore binary files!
 			if strings.Contains(filePath, extension) {
@@ -114,13 +115,31 @@ func main() {
 			if strings.Contains(line, "TODO: ") && !strings.Contains(line, ") TODO") { // This is adding a number to the start of the todo as a way to keep track and act as a guard against duplicating issues!
 				var replaceString string = fmt.Sprintf("(#%d) TODO", CurrentNumberOfIssues+1)
 				line = strings.Replace(line, "TODO", replaceString, 1)
-				fmt.Printf("I would like to make a github issue for: %s, The title is %s the body is: %s on line %d\n", line, line, fileName.Name(), lineNumber)
+				fmt.Printf("I would like to make a github issue for: %s, The title is %s the body is: %s on line %d\n", strings.TrimSpace(line), strings.TrimSpace(line), fileName.Name(), lineNumber)
 				CurrentNumberOfIssues += 1
 				// Check whether the issue already exists...
 				MakeGithubIssue(line, fmt.Sprintf("This is from file %s on line %d\n", fileName.Name(), lineNumber))
+				updatedFile = true 
+			} else if strings.Contains(line, "TODO: ") && strings.Contains(line, ") TODO") { 
+				// This finds OLD TODOs
+
+				// Array of only open issues? Find this earlier in the programme?
+
+				// If the line is open issues
+
+				// Get the number between the brackets
+
+					// If the line number already used && line title different - update?
+
+				// Add to a list of old todos
+				// updatedFile = true 
 			}
 			fileLine = append(fileLine, line)
 		}
+
+		// (#21) TODO: If todo in the list of old todos and no longer open on github, remove line
+
+		// (#22) TODO: If github issue not in the list of old todos close issue 
 
 		if err := scanner.Err(); err != nil {
 			fmt.Println("Error reading file: ", err)
@@ -128,10 +147,12 @@ func main() {
 		}
 
 		// Write modified content back to the file
-		err = os.WriteFile(filePath, []byte(strings.Join(fileLine, "\n")), 0644)
-		if err != nil {
-			fmt.Println("Error writing file:", err)
-			return
+		if updatedFile == true{
+			err = os.WriteFile(filePath, []byte(strings.Join(fileLine, "\n")), 0644)
+			if err != nil {
+				fmt.Println("Error writing file:", err)
+				return
+			}
 		}
 
 	}
