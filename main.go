@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// TODO: Add the ability to create an issue without a todo in a document
+// (#5) TODO: Add the ability to create an issue without a todo in a document
 
 func main() {
 
