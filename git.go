@@ -124,7 +124,6 @@ func genericGitRequest() (Credentials, error) {
 
 func ListGithubIssues() ([]GithubIssueResponse, error) {
 
-	// (#5) TODO: Check why this is only returning open issues? This might not be the problem but seems to be returning ONLY open issues which is meaning the number of the issue is wrong! You can have 2 number 3 open for example!!
 	var ResponseInstance []GithubIssueResponse
 
 	GitCredentials, err := genericGitRequest()
@@ -132,7 +131,7 @@ func ListGithubIssues() ([]GithubIssueResponse, error) {
 		return ResponseInstance, err
 	}
 
-	request, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/%s/issues", GitCredentials.Owner, GitCredentials.Repo), nil)
+	request, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/%s/issues?state=all", GitCredentials.Owner, GitCredentials.Repo), nil)
 	if err != nil {
 		return ResponseInstance, err
 	}
@@ -170,7 +169,6 @@ func ListGithubIssues() ([]GithubIssueResponse, error) {
 		return ResponseInstance, issues
 	}
 
-	// (#3) TODO: Check to see if this works properly, testing returns wrong?!
 	if ResponseInstance[0].Status != "200" && len(ResponseInstance[0].Status) > 0 {
 		CustomResponseError := fmt.Errorf("There was an error getting the github issues, %s\n", ResponseInstance[0].Message)
 		return ResponseInstance, CustomResponseError
@@ -178,9 +176,9 @@ func ListGithubIssues() ([]GithubIssueResponse, error) {
 
 	// fmt.Printf("ResponseInstance: %v\n\n", ResponseInstance)
 
-	for _, response := range ResponseInstance {
-		fmt.Println("The title for the response is: ", strings.TrimSpace(response.Title), " with ID: ", response.Id)
-	}
+	// for _, response := range ResponseInstance {
+	// 	fmt.Println("The title for the response is: ", strings.TrimSpace(response.Title), " with ID: ", response.Id)
+	// }
 
 	return ResponseInstance, nil
 }
@@ -195,7 +193,7 @@ func MakeGithubIssue(TITLE, BODY string) error {
 
 	// Create the issue using a struct
 	issue := Issue{
-		Title: TITLE,
+		Title: strings.TrimSpace(TITLE),
 		Body:  BODY,
 	}
 
