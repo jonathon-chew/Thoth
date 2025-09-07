@@ -29,10 +29,10 @@ func TestListIssues(t *testing.T) {
 
 func TestGenericGit(t *testing.T) {
 	t.Logf("Testing GetRemoteOrigin")
-	owner, repo, token, err := genericGitRequest()
+	GitCredentials, err := genericGitRequest()
 	if err != nil {
 		t.Fatalf("Failed to get Git data: %v", err)
 	}
 
-	t.Logf("Owner: %s, Repo: %s, Token: %s", owner, repo, token)
+	t.Logf("Owner: %s, Repo: %s, Token: %s", GitCredentials.Owner, GitCredentials.Repo, GitCredentials.Token)
 }

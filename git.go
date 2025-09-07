@@ -60,6 +60,22 @@ type GithubIssueResponse struct {
 	Status             string     `json:"status"`
 }
 
+var GithubStatusResponseMeanings = map[string]string{
+	"201": "Created",
+	"400": "Bad Request",
+	"403": "Forbidden",
+	"404": "Resource not found",
+	"410": "Gone",
+	"422": "Validation failed, or the endpoint has been spammed.",
+	"503": "Service unavailable",
+}
+
+type Credentials struct {	
+	Owner string
+	Repo string
+	Token string
+}
+
 func GetRemoteOrigin() (string, error) {
 	cmd := exec.Command("git", "config", "--get", "remote.origin.url")
 
@@ -78,21 +94,12 @@ func GetRemoteOrigin() (string, error) {
 	return out.String(), nil
 }
 
-var GithubStatusResponseMeanings = map[string]string{
-	"201": "Created",
-	"400": "Bad Request",
-	"403": "Forbidden",
-	"404": "Resource not found",
-	"410": "Gone",
-	"422": "Validation failed, or the endpoint has been spammed.",
-	"503": "Service unavailable",
-}
-
-func genericGitRequest() (OWNER string, REPO string, TOKEN string, err error) {
+func genericGitRequest() (Credentials, error) {
 	remoteOrigin, err := GetRemoteOrigin()
+	var credentials Credentials 				 
 	if err != nil {
 		fmt.Printf("Unable to get the remote origin\n")
-		return "", "", "", err
+		return credentials, err
 	}
 
 	if strings.Contains(remoteOrigin, "github") {
@@ -100,13 +107,18 @@ func genericGitRequest() (OWNER string, REPO string, TOKEN string, err error) {
 		gitUrl := strings.ReplaceAll(remoteOrigin, ".git", "")
 		gitDetails := strings.Split(strings.ReplaceAll(gitUrl, "https://github.com/", ""), "/")
 
-		OWNER = gitDetails[0]
-		REPO = strings.Replace(gitDetails[1], "\n", "", -1)
-		TOKEN = os.Getenv("GH_PERSONAL_TOKEN")
 
-		return OWNER, REPO, TOKEN, nil
+		credentials.Owner = gitDetails[0]
+		credentials.Repo = strings.Replace(gitDetails[1], "\n", "", -1)
+		credentials.Token = os.Getenv("GH_PERSONAL_TOKEN")
+
+		if credentials.Token == "" {
+			return credentials, errors.New("no GH_PERSONAL_TOKEN in the environment")
+		}
+
+		return credentials, nil
 	} else {
-		return "", "", "", errors.New(fmt.Sprintf("The remote origin is not github, and the ability to create issues for %s is not currently implimented.", remoteOrigin))
+		return credentials, errors.New(fmt.Sprintf("The remote origin is not github, and the ability to create issues for %s is not currently implimented.", remoteOrigin))
 	}
 }
 
@@ -114,19 +126,19 @@ func ListGithubIssues() ([]GithubIssueResponse, error) {
 
 	var ResponseInstance []GithubIssueResponse
 
-	OWNER, REPO, TOKEN, err := genericGitRequest()
+	GitCredentials, err := genericGitRequest()
 	if err != nil {
 		return ResponseInstance, err
 	}
 
-	request, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/%s/issues", OWNER, REPO), nil)
+	request, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/%s/issues", GitCredentials.Owner, GitCredentials.Repo), nil)
 	if err != nil {
 		return ResponseInstance, err
 	}
 
 	request.Header.Set("Accept", "application/vnd.github+json")
 	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-	request.Header.Set("Authorization", fmt.Sprintf("token %s", TOKEN))
+	request.Header.Set("Authorization", fmt.Sprintf("token %s", GitCredentials.Token))
 
 	client := http.Client{}
 
@@ -158,7 +170,7 @@ func ListGithubIssues() ([]GithubIssueResponse, error) {
 	}
 
 	// (#3) TODO: Check to see if this works properly, testing returns wrong?!
-	if ResponseInstance[0].Status != "200" && len(ResponseInstance[0].Status) > 0 {
+	if ResponseInstance[0].StatusCode != 200 && len(ResponseInstance[0].StatusCode) > 0 {
 		CustomResponseError := fmt.Errorf("There was an error getting the github issues, %s\n", ResponseInstance[0].Message)
 		return ResponseInstance, CustomResponseError
 	}
@@ -175,7 +187,7 @@ func ListGithubIssues() ([]GithubIssueResponse, error) {
 func MakeGithubIssue(TITLE, BODY string) error {
 
 	// Get the credentials required
-	OWNER, REPO, TOKEN, err := genericGitRequest()
+	GithubCredentials, err := genericGitRequest()
 	if err != nil {
 		return err
 	}
@@ -196,7 +208,7 @@ func MakeGithubIssue(TITLE, BODY string) error {
 	requestBody := bytes.NewBuffer(jsonData)
 
 	// Make the request
-	request, err := http.NewRequest("POST", fmt.Sprintf("https://api.github.com/repos/%s/%s/issues", OWNER, REPO), io.Reader(requestBody))
+	request, err := http.NewRequest("POST", fmt.Sprintf("https://api.github.com/repos/%s/%s/issues", GithubCredentials.Owner, GithubCredentials.Repo), io.Reader(requestBody))
 	if err != nil {
 		fmt.Printf("Error making the HTTP request %s\n", err)
 		return err
@@ -205,7 +217,7 @@ func MakeGithubIssue(TITLE, BODY string) error {
 	// Set the required headers
 	request.Header.Set("Accept", "application/vnd.github+json")
 	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", TOKEN))
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", GithubCredentials.Token))
 
 	// Make a new client
 	client := http.Client{}
@@ -214,6 +226,10 @@ func MakeGithubIssue(TITLE, BODY string) error {
 	req, err := client.Do(request)
 	if err != nil {
 		return err
+	}
+
+	if req.StatusCode != 200 {
+		return errors.New(fmt.Sprintf("the response was not positive, %d", req.StatusCode))
 	}
 
 	fmt.Printf("The response was: %s, %s\n", req.Status, GithubStatusResponseMeanings[req.Status])
@@ -250,7 +266,7 @@ func CloseGithubIssue(closeIssue *GithubIssueResponse) error {
 	closeIssue.State_Reason = "completed"
 
 	// Get the credentials
-	OWNER, REPO, TOKEN, err := genericGitRequest()
+	GithubCredentials, err := genericGitRequest()
 	if err != nil {
 		return err
 	}
@@ -265,7 +281,7 @@ func CloseGithubIssue(closeIssue *GithubIssueResponse) error {
 	requestBody := bytes.NewBuffer(jsonData)
 
 	// Write the request
-	request, err := http.NewRequest("PATCH", fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d", OWNER, REPO, closeIssue.Number), requestBody)
+	request, err := http.NewRequest("PATCH", fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d", GithubCredentials.Owner, GithubCredentials.Repo, closeIssue.Number), requestBody)
 	if err != nil {
 		return err
 	}
@@ -273,7 +289,7 @@ func CloseGithubIssue(closeIssue *GithubIssueResponse) error {
 	// Set the required headers
 	request.Header.Set("Accept", "application/vnd.github+json")
 	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-	request.Header.Set("Authorization", fmt.Sprintf("token %s", TOKEN))
+	request.Header.Set("Authorization", fmt.Sprintf("token %s", GithubCredentials.Token))
 
 	client := http.Client{}
 
