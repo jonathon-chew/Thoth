@@ -5,17 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 )
 
-// (#5) TODO: Add the ability to create an issue without a todo in a document
-
 func main() {
 
-	for _, i := range os.Args[1:] {
-		if i == "--version" {
-			fmt.Printf("v0.0.1\n")
-			os.Exit(0)
+	if len(os.Args[1:]) >= 1 {
+		er := CLI(os.Args[1:])
+		if er != nil {
+			fmt.Printf("Error parsing the command line argument, %v", er)
+		} else {
+			return
 		}
 	}
 
@@ -48,7 +49,7 @@ func main() {
 	}
 
 	// Look in the directories for a git folder
-	if ListContains(directoryList, "git") == true {
+	if slices.Contains(directoryList, "git") {
 		fmt.Printf("[ERROR]: No git folder found\n")
 		os.Exit(1)
 	}
@@ -56,14 +57,14 @@ func main() {
 	// Check there is an origin, and exit if not!
 	_, remoteOriginErr := GetRemoteOrigin()
 	if remoteOriginErr != nil {
-		fmt.Println(fmt.Errorf("[ERROR]: %s\n", remoteOriginErr))
+		fmt.Printf("[ERROR]: %s\n", remoteOriginErr)
 		os.Exit(1)
 	}
 
 	// Get a list of all current issues
 	listOfGithubIssues, githubErr := ListGithubIssues()
 	if githubErr != nil {
-		if errors.Is(githubErr, fmt.Errorf("There were no github issues")) {
+		if errors.Is(githubErr, fmt.Errorf("there were no github issues")) {
 			fmt.Printf("[ERROR]: There was an error getting issues: %v\n", githubErr)
 			return
 		}
@@ -85,12 +86,12 @@ func main() {
 		var fileLine []string          // Get the lines of the file
 		var filePath = fileName.Name() // Set the file name
 
-		if ListContains(unwantedFiles, filePath) { // Make sure it's not one of the known unwanted files to edit
+		if slices.Contains(unwantedFiles, filePath) { // Make sure it's not one of the known unwanted files to edit
 			continue
 		}
 
 		var unwantedExtention bool = false
-		var updatedFile bool = false 
+		var updatedFile bool = false
 
 		for _, extension := range unwantedExtentions { // ignore binary files!
 			if strings.Contains(filePath, extension) {
@@ -98,7 +99,7 @@ func main() {
 			}
 		}
 
-		if unwantedExtention == true {
+		if unwantedExtention {
 			continue
 		}
 
@@ -119,27 +120,21 @@ func main() {
 				CurrentNumberOfIssues += 1
 				// Check whether the issue already exists...
 				MakeGithubIssue(line, fmt.Sprintf("This is from file %s on line %d\n", fileName.Name(), lineNumber))
-				updatedFile = true 
-			} else if strings.Contains(line, "TODO: ") && strings.Contains(line, ") TODO") { 
+				updatedFile = true
+			} else if strings.Contains(line, "TODO: ") && strings.Contains(line, ") TODO") {
 				// This finds OLD TODOs
 
-				// Array of only open issues? Find this earlier in the programme?
+				// (#22) TODO: If github issue not in the list of old todos close issue
+				/* _, removeError := RemoveLineDueToGithubIssue(line, listOfGithubIssues)
+				if removeError == nil {
+					// (#21) TODO: If todo in the list of old todos and no longer open on github, remove line
+					line = ""
+				} */
 
-				// If the line is open issues
-
-				// Get the number between the brackets
-
-					// If the line number already used && line title different - update?
-
-				// Add to a list of old todos
-				// updatedFile = true 
+				// issue here being TOO powerful, when run on itself it deletes the if statements! Check for number?
 			}
 			fileLine = append(fileLine, line)
 		}
-
-		// (#21) TODO: If todo in the list of old todos and no longer open on github, remove line
-
-		// (#22) TODO: If github issue not in the list of old todos close issue 
 
 		if err := scanner.Err(); err != nil {
 			fmt.Println("Error reading file: ", err)
@@ -147,16 +142,13 @@ func main() {
 		}
 
 		// Write modified content back to the file
-		if updatedFile == true{
+		if updatedFile {
 			err = os.WriteFile(filePath, []byte(strings.Join(fileLine, "\n")), 0644)
 			if err != nil {
 				fmt.Println("Error writing file:", err)
 				return
 			}
 		}
-
 	}
-
 	// MakeGithubIssue("My first GitHub Issue", "This is my first github issue from the API")
-
 }
