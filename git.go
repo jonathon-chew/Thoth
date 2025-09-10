@@ -25,6 +25,9 @@ type Issue struct {
 	Assignees string   `json:"assignees,omitempty"`
 }
 
+type Label struct {
+}
+
 type GithubIssueResponse struct {
 	Url            string `json:"url"`
 	Repository_url string `json:"repository_url"`
@@ -44,7 +47,7 @@ type GithubIssueResponse struct {
 		User_view_type string `json:"user_view_type"`
 		Site_admin     bool   `json:"site_admin"`
 	} `json:"user"`
-	Labeles            []string   `json:"labels"`
+	Labels             []Label    `json:"labels"`
 	State              string     `json:"state"`
 	State_Reason       string     `json:"state_reason"`
 	Locked             bool       `json:"locked"`
@@ -70,9 +73,9 @@ var GithubStatusResponseMeanings = map[string]string{
 	"503": "Service unavailable",
 }
 
-type Credentials struct {	
+type Credentials struct {
 	Owner string
-	Repo string
+	Repo  string
 	Token string
 }
 
@@ -96,20 +99,18 @@ func GetRemoteOrigin() (string, error) {
 
 func genericGitRequest() (Credentials, error) {
 	remoteOrigin, err := GetRemoteOrigin()
-	var credentials Credentials 				 
+	var credentials Credentials
 	if err != nil {
 		fmt.Printf("Unable to get the remote origin\n")
 		return credentials, err
 	}
 
 	if strings.Contains(remoteOrigin, "github") {
-		// https://github.com/OWNER/REPO.git
 		gitUrl := strings.ReplaceAll(remoteOrigin, ".git", "")
 		gitDetails := strings.Split(strings.ReplaceAll(gitUrl, "https://github.com/", ""), "/")
 
-
 		credentials.Owner = gitDetails[0]
-		credentials.Repo = strings.Replace(gitDetails[1], "\n", "", -1)
+		credentials.Repo  = strings.Replace(gitDetails[1], "\n", "", -1)
 		credentials.Token = os.Getenv("GH_PERSONAL_TOKEN")
 
 		if credentials.Token == "" {
@@ -118,7 +119,7 @@ func genericGitRequest() (Credentials, error) {
 
 		return credentials, nil
 	} else {
-		return credentials, errors.New(fmt.Sprintf("The remote origin is not github, and the ability to create issues for %s is not currently implimented.", remoteOrigin))
+		return credentials, fmt.Errorf("the remote origin is not github, and the ability to create issues for %s is not currently implimented", remoteOrigin)
 	}
 }
 
@@ -149,7 +150,7 @@ func ListGithubIssues() ([]GithubIssueResponse, error) {
 
 	defer req.Body.Close()
 
-	// fmt.Printf("The response was: %s, %s\n\n", req.Status, GithubStatusResponseMeanings[req.Status])
+	fmt.Printf("The response was: %s, %s\n\n", req.Status, GithubStatusResponseMeanings[req.Status])
 
 	responseBody, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -158,20 +159,16 @@ func ListGithubIssues() ([]GithubIssueResponse, error) {
 
 	// fmt.Printf("Repsonse Body: %s\n\n", string(responseBody))
 
-	if string(responseBody) == "[]" {
-		CustomResponseError := fmt.Errorf("There were no github issues")
-		return ResponseInstance, CustomResponseError
+	if err := json.Unmarshal(responseBody, &ResponseInstance); err != nil {
+		return ResponseInstance, fmt.Errorf("error unmarshalling response: %w", err)
 	}
 
-	issues := json.Unmarshal(responseBody, &ResponseInstance)
-	if issues != nil {
-		fmt.Printf("Error Unmarshalling, %v\n", issues)
-		return ResponseInstance, issues
+	if len(ResponseInstance) == 0 {
+		return ResponseInstance, fmt.Errorf("no GitHub issues found")
 	}
 
-	if ResponseInstance[0].Status != "200" && len(ResponseInstance[0].Status) > 0 {
-		CustomResponseError := fmt.Errorf("There was an error getting the github issues, %s\n", ResponseInstance[0].Message)
-		return ResponseInstance, CustomResponseError
+	if req.StatusCode != http.StatusOK {
+		return ResponseInstance, fmt.Errorf("GitHub API error: %s", req.Status)
 	}
 
 	// fmt.Printf("ResponseInstance: %v\n\n", ResponseInstance)
@@ -227,13 +224,12 @@ func MakeGithubIssue(TITLE, BODY string) error {
 		return err
 	}
 
-	if req.StatusCode != 200 {
-		return errors.New(fmt.Sprintf("the response was not positive, %d", req.StatusCode))
+	if req.StatusCode != 200 && req.StatusCode != 201 {
+		fmt.Println(req.Body)
+		return fmt.Errorf("the response was not positive, %d", req.StatusCode)
 	}
 
 	fmt.Printf("The response was: %s, %s\n", req.Status, GithubStatusResponseMeanings[req.Status])
-
-	// defer req.Body.Close()
 
 	return nil
 }
@@ -261,7 +257,7 @@ func RemoveLineDueToGithubIssue(line string, foundGithubIssues []GithubIssueResp
 func CloseGithubIssue(closeIssue *GithubIssueResponse) error {
 
 	// Put together the JSON message required to close an issue
-	closeIssue.State        = "closed"
+	closeIssue.State = "closed"
 	closeIssue.State_Reason = "completed"
 
 	// Get the credentials

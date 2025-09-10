@@ -19,11 +19,13 @@ func TestListIssues(t *testing.T) {
 	returned, err := ListGithubIssues()
 	if err != nil {
 		t.Fatalf("Failed to get remote origin: %v", err)
+	} else {
+		t.Logf("Found issues %d", len(returned))
 	}
 
-	for _, i := range returned{
-		t.Logf("From the test file: The title from the API was: %v\n", i.Title)
-	}
+	// for _, i := range returned{
+	// 	t.Logf("From the test file: The title from the API was: %v\n", i.Title)
+	// }
 
 }
 
