@@ -14,7 +14,7 @@ func main() {
 	if len(os.Args[1:]) >= 1 {
 		er := CLI(os.Args[1:])
 		if er != nil {
-			fmt.Printf("Error parsing the command line argument, %v", er)
+			fmt.Printf("Error parsing the command line argument, %v\n", er)
 		} else {
 			return
 		}
@@ -73,6 +73,7 @@ func main() {
 	// Get the number of existing issues
 	CurrentNumberOfIssues := len(listOfGithubIssues)
 
+	var foundNewTODO bool = false
 	for _, fileName := range fileList {
 
 		if fileName.IsDir() {
@@ -116,11 +117,12 @@ func main() {
 			if strings.Contains(line, "TODO: ") && !strings.Contains(line, ") TODO") { // This is adding a number to the start of the todo as a way to keep track and act as a guard against duplicating issues!
 				var replaceString string = fmt.Sprintf("(#%d) TODO", CurrentNumberOfIssues+1)
 				line = strings.Replace(line, "TODO", replaceString, 1)
-				fmt.Printf("I would like to make a github issue for: %s, The title is %s the body is: %s on line %d\n", strings.TrimSpace(line), strings.TrimSpace(line), fileName.Name(), lineNumber)
+				fmt.Printf("I would like to make a github issue for: %s\nThe title is %s\nThe body is: %s on line %d\n", strings.TrimSpace(line), strings.TrimSpace(line), fileName.Name(), lineNumber)
 				CurrentNumberOfIssues += 1
 				// Check whether the issue already exists...
 				MakeGithubIssue(line, fmt.Sprintf("This is from file %s on line %d\n", fileName.Name(), lineNumber))
 				updatedFile = true
+				foundNewTODO = true
 			} else if strings.Contains(line, "TODO: ") && strings.Contains(line, ") TODO") {
 				// This finds OLD TODOs
 
@@ -151,4 +153,8 @@ func main() {
 		}
 	}
 	// MakeGithubIssue("My first GitHub Issue", "This is my first github issue from the API")
+
+	if !foundNewTODO {
+		fmt.Println("No new todo found in any file in this directory")
+	}
 }
