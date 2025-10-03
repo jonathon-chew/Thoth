@@ -12,6 +12,8 @@ import (
 	"strings"
 )
 
+// TODO: Pretty printing for better reading?
+
 type Assignee struct {
 	Login string `json:"login"`
 	Type  string `json:"type"`
@@ -110,7 +112,7 @@ func genericGitRequest() (Credentials, error) {
 		gitDetails := strings.Split(strings.ReplaceAll(gitUrl, "https://github.com/", ""), "/")
 
 		credentials.Owner = gitDetails[0]
-		credentials.Repo  = strings.Replace(gitDetails[1], "\n", "", -1)
+		credentials.Repo = strings.Replace(gitDetails[1], "\n", "", -1)
 		credentials.Token = os.Getenv("GH_PERSONAL_TOKEN")
 
 		if credentials.Token == "" {
@@ -150,6 +152,7 @@ func ListGithubIssues() ([]GithubIssueResponse, error) {
 
 	defer req.Body.Close()
 
+	// TOOD: Decide on whether or not you want this printed out EVERY time the programme is run
 	fmt.Printf("The response was: %s, %s\n\n", req.Status, GithubStatusResponseMeanings[req.Status])
 
 	responseBody, err := io.ReadAll(req.Body)

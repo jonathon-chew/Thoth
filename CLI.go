@@ -45,7 +45,10 @@ func CLI(CommandLineArguments []string) error {
 			return nil
 		case "--version", "-version", "-v":
 			fmt.Printf("v0.0.2\n")
+		case "--help", "-help", "-h":
+			fmt.Printf("\nNo Arguments\nYou can run with no arguments to check all files\nGet Issues\nYou can pass in a get flag which will List the github issues\nNew Issue\nIf you pass in the set flag, please pass in the title flag and body flag (in that order) to make a new issue with the relevent Title and Body\nVersion Number\nVersion Number can be passed in with the version flag")
 		}
+
 	}
 	return nil
 }
