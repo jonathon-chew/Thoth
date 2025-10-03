@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-// TODO: Pretty printing for better reading?
+// (#24) TODO: Pretty printing for better reading?
 
 type Assignee struct {
 	Login string `json:"login"`

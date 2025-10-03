@@ -3,10 +3,14 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
+	"strings"
+
+	aphrodite "github.com/jonathon-chew/Aphrodite"
 )
 
 func CLI(CommandLineArguments []string) error {
-	fmt.Printf("I have found additional command line arguments, switching to CLI mode\n\n")
+	aphrodite.PrintColour("Cyan", "I have found additional command line arguments, switching to CLI mode\n")
 
 	for index, command := range CommandLineArguments {
 		switch command {
@@ -16,8 +20,35 @@ func CLI(CommandLineArguments []string) error {
 				return err
 			}
 
-			for _, issue := range returned {
-				fmt.Printf("The issue title is:%v\n", issue.Title)
+			// TODO: Additional arguments to not show closed?
+
+			var closedFlag, openFlag bool = false, false
+			// Check for extra flags
+			if len(os.Args) > 2 {
+				for _, extraCommand := range os.Args[2:] {
+					switch extraCommand {
+					case "--closed", "-closed", "-c":
+						closedFlag = true
+					case "--open", "-open", "-o":
+						openFlag = true
+					}
+				}
+			}
+
+			for index, issue := range returned {
+				if closedFlag && issue.State == "closed" {
+					fmt.Printf("%d The issue title is:%s\nThe body is:%s\nThe status is:%s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, aphrodite.ReturnInfo(issue.State))
+					continue
+				}
+
+				if openFlag && issue.State == "open" {
+					fmt.Printf("%d The issue title is:%s\nThe body is:%s\nThe status is:%s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, aphrodite.ReturnError(issue.State))
+					continue
+				}
+
+				if !closedFlag && !openFlag {
+					fmt.Printf("%d The issue title is:%s\nThe body is:%s\nThe status is:%s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, issue.State)
+				}
 			}
 
 			return nil
@@ -44,9 +75,23 @@ func CLI(CommandLineArguments []string) error {
 
 			return nil
 		case "--version", "-version", "-v":
-			fmt.Printf("v0.0.2\n")
+			fmt.Printf("v0.0.3\n")
 		case "--help", "-help", "-h":
-			fmt.Printf("\nNo Arguments\nYou can run with no arguments to check all files\nGet Issues\nYou can pass in a get flag which will List the github issues\nNew Issue\nIf you pass in the set flag, please pass in the title flag and body flag (in that order) to make a new issue with the relevent Title and Body\nVersion Number\nVersion Number can be passed in with the version flag")
+			type Help struct {
+				NoArguments string
+				GetIssues   string
+				SetIssues   string
+				Version     string
+			}
+
+			var newHelp Help
+
+			newHelp.NoArguments, _ = aphrodite.ReturnBold("Cyan", "No Arguments")
+			newHelp.GetIssues, _ = aphrodite.ReturnBold("Cyan", "Get issues")
+			newHelp.SetIssues, _ = aphrodite.ReturnBold("Cyan", "Set issues")
+			newHelp.Version, _ = aphrodite.ReturnBold("Cyan", "Version")
+
+			fmt.Printf("\n%s\nYou can run with no arguments to check all files\n%s\nYou can pass in a get flag which will List the github issues\n%s\nIf you pass in the set flag, please pass in the title flag and body flag (in that order) to make a new issue with the relevent Title and Body\n%s\nVersion Number can be passed in with the version flag", newHelp.NoArguments, newHelp.GetIssues, newHelp.SetIssues, newHelp.Version)
 		}
 
 	}
