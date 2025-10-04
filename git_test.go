@@ -16,7 +16,7 @@ func TestRemoteURL(t *testing.T) {
 
 func TestListIssues(t *testing.T) {
 	t.Logf("Testing ListGithubIssues")
-	returned, err := ListGithubIssues()
+	returned, err := ListGithubIssues(false) // false is NOT passed from the CLI so will always report if it connected to github
 	if err != nil {
 		t.Fatalf("Failed to get remote origin: %v", err)
 	} else {
