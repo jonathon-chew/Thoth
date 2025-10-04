@@ -125,7 +125,7 @@ func genericGitRequest() (Credentials, error) {
 	}
 }
 
-func ListGithubIssues() ([]GithubIssueResponse, error) {
+func ListGithubIssues(passedFromCLI bool) ([]GithubIssueResponse, error) {
 
 	var ResponseInstance []GithubIssueResponse
 
@@ -152,8 +152,11 @@ func ListGithubIssues() ([]GithubIssueResponse, error) {
 
 	defer req.Body.Close()
 
-	// TOOD: Decide on whether or not you want this printed out EVERY time the programme is run
-	fmt.Printf("The response was: %s, %s\n\n", req.Status, GithubStatusResponseMeanings[req.Status])
+	// (#26) TODO: Decide on whether or not you want this printed out EVERY time the programme is run
+
+	if !passedFromCLI {
+		fmt.Printf("The response was: %s, %s\n\n", req.Status, GithubStatusResponseMeanings[req.Status])
+	}
 
 	responseBody, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -167,7 +170,7 @@ func ListGithubIssues() ([]GithubIssueResponse, error) {
 	}
 
 	if len(ResponseInstance) == 0 {
-		return ResponseInstance, fmt.Errorf("no GitHub issues found")
+		return ResponseInstance, errors.New("no GitHub issues found")
 	}
 
 	if req.StatusCode != http.StatusOK {

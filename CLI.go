@@ -12,15 +12,22 @@ import (
 func CLI(CommandLineArguments []string) error {
 	aphrodite.PrintColour("Cyan", "I have found additional command line arguments, switching to CLI mode\n")
 
+	var NoIssues error = errors.New("no GitHub issues found")
+
 	for index, command := range CommandLineArguments {
 		switch command {
 		case "--get", "-get", "-g":
-			returned, err := ListGithubIssues()
+			returned, err := ListGithubIssues(true)
+			if err != nil && errors.Is(err, NoIssues) {
+				aphrodite.PrintWarning("no GitHub issues found")
+				return nil
+			}
+
 			if err != nil {
 				return err
 			}
 
-			// TODO: Additional arguments to not show closed?
+			// (#25) TODO: Additional arguments to not show closed?
 
 			var closedFlag, openFlag bool = false, false
 			// Check for extra flags
@@ -75,7 +82,7 @@ func CLI(CommandLineArguments []string) error {
 
 			return nil
 		case "--version", "-version", "-v":
-			fmt.Printf("v0.0.3\n")
+			fmt.Printf("v0.0.4\n")
 		case "--help", "-help", "-h":
 			type Help struct {
 				NoArguments string

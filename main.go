@@ -15,6 +15,7 @@ func main() {
 		er := CLI(os.Args[1:])
 		if er != nil {
 			fmt.Printf("Error parsing the command line argument, %v\n", er)
+			return
 		} else {
 			return
 		}
@@ -62,7 +63,7 @@ func main() {
 	}
 
 	// Get a list of all current issues
-	listOfGithubIssues, githubErr := ListGithubIssues()
+	listOfGithubIssues, githubErr := ListGithubIssues(false)
 	if githubErr != nil {
 		if errors.Is(githubErr, fmt.Errorf("there were no github issues")) {
 			fmt.Printf("[ERROR]: There was an error getting issues: %v\n", githubErr)
