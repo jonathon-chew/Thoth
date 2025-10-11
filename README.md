@@ -1,4 +1,7 @@
-# 🌃 Thoth (Go)
+# Thoth (Go)
+<p align="center">
+<img width="400" src="doc/images/Thoth.png" alt="Thoth" title="Thoth" />
+</p>
 
 A language agnostic tool for turning TODO lines / comments in a code base into open Github issues.
 
