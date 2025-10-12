@@ -27,8 +27,6 @@ func CLI(CommandLineArguments []string) error {
 				return err
 			}
 
-			// (#25) TODO: Additional arguments to not show closed?
-
 			var closedFlag, openFlag bool = false, false
 			// Check for extra flags
 			if len(os.Args) > 2 {
