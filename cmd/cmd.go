@@ -43,12 +43,12 @@ func CLI(CommandLineArguments []string) error {
 
 			for index, issue := range returned {
 				if closedFlag && issue.State == "closed" {
-					fmt.Printf("%d The issue title is:%s\nThe body is:%s\nThe status is:%s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, aphrodite.ReturnInfo(issue.State))
+					fmt.Printf("%d The issue title is:%s\nThe body is:%s\nThe status is:%s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, aphrodite.ReturnWarning(issue.State))
 					continue
 				}
 
 				if openFlag && issue.State == "open" {
-					fmt.Printf("%d The issue title is:%s\nThe body is:%s\nThe status is:%s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, aphrodite.ReturnError(issue.State))
+					fmt.Printf("%d The issue title is:%s\nThe body is:%s\nThe status is:%s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, aphrodite.ReturnInfo(issue.State))
 					continue
 				}
 
@@ -83,21 +83,18 @@ func CLI(CommandLineArguments []string) error {
 		case "--version", "-version", "-v":
 			fmt.Printf("v0.0.4\n")
 		case "--help", "-help", "-h":
-			type Help struct {
-				NoArguments string
-				GetIssues   string
-				SetIssues   string
-				Version     string
-			}
 
-			var newHelp Help
+			aphrodite.PrintBold("Cyan", "No Arguments\n")
+			aphrodite.PrintColour("Green", "You can run with no arguments to check all the files in the current directory\n\n")
 
-			newHelp.NoArguments, _ = aphrodite.ReturnBold("Cyan", "No Arguments")
-			newHelp.GetIssues, _ = aphrodite.ReturnBold("Cyan", "Get issues")
-			newHelp.SetIssues, _ = aphrodite.ReturnBold("Cyan", "Set issues")
-			newHelp.Version, _ = aphrodite.ReturnBold("Cyan", "Version")
+			aphrodite.PrintBold("Cyan", "Get issues\n")
+			aphrodite.PrintColour("Green", "You can pass in a get flag which will List the github issues, this can be supplimented with --open and --closed to filter to show only issues with those flags\n\n")
 
-			fmt.Printf("\n%s\nYou can run with no arguments to check all files\n%s\nYou can pass in a get flag which will List the github issues\n%s\nIf you pass in the set flag, please pass in the title flag and body flag (in that order) to make a new issue with the relevent Title and Body\n%s\nVersion Number can be passed in with the version flag", newHelp.NoArguments, newHelp.GetIssues, newHelp.SetIssues, newHelp.Version)
+			aphrodite.PrintBold("Cyan", "Set issues\n")
+			aphrodite.PrintColour("Green", "If you pass in the set flag, please pass in the title flag and body flag (in that order) to make a new issue with the relevent Title and Body\n\n")
+
+			aphrodite.PrintBold("Cyan", "Version\n")
+			aphrodite.PrintColour("Green", "Version Number can be passed in with the version flag\n\n")
 		}
 
 	}
