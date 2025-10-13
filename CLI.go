@@ -60,13 +60,13 @@ func CLI(CommandLineArguments []string) error {
 
 		case "--set", "-set", "-s":
 			var IssueTitle, IssueBody string
-			if CommandLineArguments[index+1] == "title" || CommandLineArguments[index+1] == "--title" || CommandLineArguments[index+1] == "-title" {
+			if CommandLineArguments[index+1] == "title" || CommandLineArguments[index+1] == "--title" || CommandLineArguments[index+1] == "-title" || CommandLineArguments[index+1] == "-t" {
 				IssueTitle = CommandLineArguments[index+2]
 			} else {
 				return errors.New("could not find a title flag proceeding the set command")
 			}
 
-			if CommandLineArguments[index+3] == "body" || CommandLineArguments[index+3] == "--body" || CommandLineArguments[index+3] == "-body" {
+			if CommandLineArguments[index+3] == "body" || CommandLineArguments[index+3] == "--body" || CommandLineArguments[index+3] == "-body" || CommandLineArguments[index+3] == "-b" {
 				IssueBody = CommandLineArguments[index+4]
 			} else {
 				return errors.New("could not find a body flag proceeding the set command")
