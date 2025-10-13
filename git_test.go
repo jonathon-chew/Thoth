@@ -2,11 +2,13 @@ package main
 
 import (
 	"testing"
+
+	"github.com/jonathon-chew/Thoth/git"
 )
 
 func TestRemoteURL(t *testing.T) {
 	t.Logf("Testing GetRemoteOrigin")
-	url, err := GetRemoteOrigin()
+	url, err := git.GetRemoteOrigin()
 	if err != nil {
 		t.Fatalf("Failed to get remote origin: %v", err)
 	}
@@ -16,7 +18,7 @@ func TestRemoteURL(t *testing.T) {
 
 func TestListIssues(t *testing.T) {
 	t.Logf("Testing ListGithubIssues")
-	returned, err := ListGithubIssues(false) // false is NOT passed from the CLI so will always report if it connected to github
+	returned, err := git.ListGithubIssues(false) // false is NOT passed from the CLI so will always report if it connected to github
 	if err != nil {
 		t.Fatalf("Failed to get remote origin: %v", err)
 	} else {
@@ -31,7 +33,7 @@ func TestListIssues(t *testing.T) {
 
 func TestGenericGit(t *testing.T) {
 	t.Logf("Testing GetRemoteOrigin")
-	GitCredentials, err := genericGitRequest()
+	GitCredentials, err := git.GenericGitRequest()
 	if err != nil {
 		t.Fatalf("Failed to get Git data: %v", err)
 	}

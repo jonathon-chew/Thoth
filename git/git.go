@@ -1,4 +1,4 @@
-package main
+package git
 
 import (
 	"bytes"
@@ -99,7 +99,7 @@ func GetRemoteOrigin() (string, error) {
 	return out.String(), nil
 }
 
-func genericGitRequest() (Credentials, error) {
+func GenericGitRequest() (Credentials, error) {
 	remoteOrigin, err := GetRemoteOrigin()
 	var credentials Credentials
 	if err != nil {
@@ -129,7 +129,7 @@ func ListGithubIssues(passedFromCLI bool) ([]GithubIssueResponse, error) {
 
 	var ResponseInstance []GithubIssueResponse
 
-	GitCredentials, err := genericGitRequest()
+	GitCredentials, err := GenericGitRequest()
 	if err != nil {
 		return ResponseInstance, err
 	}
@@ -189,7 +189,7 @@ func ListGithubIssues(passedFromCLI bool) ([]GithubIssueResponse, error) {
 func MakeGithubIssue(TITLE, BODY string) error {
 
 	// Get the credentials required
-	GithubCredentials, err := genericGitRequest()
+	GithubCredentials, err := GenericGitRequest()
 	if err != nil {
 		return err
 	}
@@ -267,7 +267,7 @@ func CloseGithubIssue(closeIssue *GithubIssueResponse) error {
 	closeIssue.State_Reason = "completed"
 
 	// Get the credentials
-	GithubCredentials, err := genericGitRequest()
+	GithubCredentials, err := GenericGitRequest()
 	if err != nil {
 		return err
 	}

@@ -7,12 +7,15 @@ import (
 	"os"
 	"slices"
 	"strings"
+
+	"github.com/jonathon-chew/Thoth/cmd"
+	"github.com/jonathon-chew/Thoth/git"
 )
 
 func main() {
 
 	if len(os.Args[1:]) >= 1 {
-		er := CLI(os.Args[1:])
+		er := cmd.CLI(os.Args[1:])
 		if er != nil {
 			fmt.Printf("Error parsing the command line argument, %v\n", er)
 			return
@@ -56,14 +59,14 @@ func main() {
 	}
 
 	// Check there is an origin, and exit if not!
-	_, remoteOriginErr := GetRemoteOrigin()
+	_, remoteOriginErr := git.GetRemoteOrigin()
 	if remoteOriginErr != nil {
 		fmt.Printf("[ERROR]: %s\n", remoteOriginErr)
 		os.Exit(1)
 	}
 
 	// Get a list of all current issues
-	listOfGithubIssues, githubErr := ListGithubIssues(false)
+	listOfGithubIssues, githubErr := git.ListGithubIssues(false)
 	if githubErr != nil {
 		if errors.Is(githubErr, fmt.Errorf("there were no github issues")) {
 			fmt.Printf("[ERROR]: There was an error getting issues: %v\n", githubErr)
@@ -121,7 +124,7 @@ func main() {
 				fmt.Printf("I would like to make a github issue for: %s\nThe title is %s\nThe body is: %s on line %d\n", strings.TrimSpace(line), strings.TrimSpace(line), fileName.Name(), lineNumber)
 				CurrentNumberOfIssues += 1
 				// Check whether the issue already exists...
-				MakeGithubIssue(line, fmt.Sprintf("This is from file %s on line %d\n", fileName.Name(), lineNumber))
+				git.MakeGithubIssue(line, fmt.Sprintf("This is from file %s on line %d\n", fileName.Name(), lineNumber))
 				updatedFile = true
 				foundNewTODO = true
 			} else if strings.Contains(line, "TODO: ") && strings.Contains(line, ") TODO") {

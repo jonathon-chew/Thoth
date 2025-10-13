@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	aphrodite "github.com/jonathon-chew/Aphrodite"
+	"github.com/jonathon-chew/Thoth/git"
 )
 
 func CLI(CommandLineArguments []string) error {
@@ -17,7 +18,7 @@ func CLI(CommandLineArguments []string) error {
 	for index, command := range CommandLineArguments {
 		switch command {
 		case "--get", "-get", "-g":
-			returned, err := ListGithubIssues(true)
+			returned, err := git.ListGithubIssues(true)
 			if err != nil && errors.Is(err, NoIssues) {
 				aphrodite.PrintWarning("no GitHub issues found")
 				return nil
@@ -72,7 +73,7 @@ func CLI(CommandLineArguments []string) error {
 				return errors.New("could not find a body flag proceeding the set command")
 			}
 
-			makeError := MakeGithubIssue(IssueTitle, IssueBody)
+			makeError := git.MakeGithubIssue(IssueTitle, IssueBody)
 			if makeError != nil {
 				fmt.Println(makeError)
 				return makeError
