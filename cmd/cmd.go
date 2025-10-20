@@ -44,16 +44,19 @@ func CLI(CommandLineArguments []string) error {
 			for index, issue := range returned {
 				if closedFlag && issue.State == "closed" {
 					fmt.Printf("%d The issue title is:%s\nThe body is:%s\nThe status is:%s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, aphrodite.ReturnWarning(issue.State))
+					fmt.Printf("______________\n")
 					continue
 				}
 
 				if openFlag && issue.State == "open" {
 					fmt.Printf("%d The issue title is:%s\nThe body is:%s\nThe status is:%s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, aphrodite.ReturnInfo(issue.State))
+					fmt.Printf("______________\n")
 					continue
 				}
 
 				if !closedFlag && !openFlag {
 					fmt.Printf("%d The issue title is:%s\nThe body is:%s\nThe status is:%s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, issue.State)
+					fmt.Printf("______________\n")
 				}
 			}
 
@@ -82,6 +85,7 @@ func CLI(CommandLineArguments []string) error {
 			return nil
 		case "--version", "-version", "-v":
 			fmt.Printf("v0.0.4\n")
+
 		case "--help", "-help", "-h":
 
 			aphrodite.PrintBold("Cyan", "No Arguments\n")
