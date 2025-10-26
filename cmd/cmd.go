@@ -107,6 +107,12 @@ func CLI(CommandLineArguments []string) error {
 			aphrodite.PrintBold("cyan", "Increment Tag")
 			aphrodite.PrintColour("Green", "Finds the biggest version number in the format format v[number].[number].[number] and adds 1 to the major / minor / patch numbers\n\n")
 
+			aphrodite.PrintBold("cyan", "--open-issues")
+			aphrodite.PrintColour("Green", "Open the github page on the issues page to manage from there\n\n")
+
+			aphrodite.PrintBold("cyan", "--open-pull")
+			aphrodite.PrintColour("Green", "Open the github page on the pull request page to manage from there\n\n")
+
 		case "--tags", "-tags", "-t", "--tag", "-tag":
 			version, ErrGetLatestTag := git.GetLatestTag()
 			if ErrGetLatestTag != nil {
@@ -127,7 +133,19 @@ func CLI(CommandLineArguments []string) error {
 			}
 
 		case "--open", "-open", "-o":
-			ErrOpeningRemoteOrigin := git.OpenRemoteOrigin()
+			ErrOpeningRemoteOrigin := git.OpenRemoteOrigin("")
+			if ErrOpeningRemoteOrigin != nil {
+				return ErrOpeningRemoteOrigin
+			}
+
+		case "--open-issues", "-open-issues", "-oi":
+			ErrOpeningRemoteOrigin := git.OpenRemoteOrigin("issues")
+			if ErrOpeningRemoteOrigin != nil {
+				return ErrOpeningRemoteOrigin
+			}
+
+		case "--open-pull", "-open-pull", "-op":
+			ErrOpeningRemoteOrigin := git.OpenRemoteOrigin("pull")
 			if ErrOpeningRemoteOrigin != nil {
 				return ErrOpeningRemoteOrigin
 			}

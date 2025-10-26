@@ -115,13 +115,26 @@ func FindGitFolder() bool {
 	return err == nil
 }
 
-func OpenRemoteOrigin() error {
+func OpenRemoteOrigin(place string) error {
 	url, ErrGetRemote := GetRemoteOrigin()
 	if ErrGetRemote != nil {
 		return ErrGetRemote
 	}
 
 	url = strings.TrimSpace(url)
+
+	if strings.Contains(url, "github.com") && place != "" {
+		switch place {
+		case "pull":
+			url = url + "/pulls"
+		case "issues":
+			url = url + "/issues"
+		}
+	} else if place != "" {
+		return fmt.Errorf("[ERROR]: only github.com has been implimented so far")
+	}
+
+	fmt.Printf("Opening %s Place is: %s", url, place)
 
 	cmd := exec.Command("open", url)
 
