@@ -149,6 +149,7 @@ func CLI(CommandLineArguments []string) error {
 			if ErrOpeningRemoteOrigin != nil {
 				return ErrOpeningRemoteOrigin
 			}
+
 		}
 	}
 

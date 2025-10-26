@@ -55,7 +55,22 @@ else
 fi
 
 # ----------------------------
-# Step 4: Incriment the tag version
+# Step 4: Check for unpushed changes
+# ----------------------------
+if [[ $dry == "0" ]]; then
+gitResponse=$(git status --porcelain)
+  if [ -z "$status" ]; then
+    echo "${GREEN} Working tree clean — no changes to commit.${RESET}"
+  else
+    echo "${RED}There are uncommitted changes:${RESET}"
+    echo " - Changes not staged for commit: $(git status --porcelain | grep '^ [MADRC]' | wc -l | tr -d ' ')"
+    echo " - Changes staged for commit: $(git status --porcelain | grep '^[MADRC]' | wc -l | tr -d ' ')"
+    exit 1
+  fi
+fi
+
+# ----------------------------
+# Step 5: Incriment the tag version
 # ----------------------------
 if [[ $dry == "0" ]]; then
   echo -e "${CYAN} Updating git tags...${RESET}"

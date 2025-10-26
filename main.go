@@ -14,12 +14,18 @@ import (
 
 func main() {
 
+	// Check if there are arguments have been input - if so run through the cmd module
 	if len(os.Args[1:]) >= 1 {
-		er := cmd.CLI(os.Args[1:])
-		if er != nil {
-			fmt.Printf("Error parsing the command line argument, %v\n", er)
+		ErrProcessingCmd := cmd.CLI(os.Args[1:])
+		if ErrProcessingCmd != nil {
+
+			// Print that there was an issue and the command passed in
+			fmt.Printf("Error parsing the command line argument, %v\n", ErrProcessingCmd)
+
+			// Return with a bad status code to allow this to be checked in other programmes whether it was succesfully even understood!
 			os.Exit(1)
 		} else {
+			// If there is no error exit the main function - this stops the deafult behaviour from writing to the file
 			return
 		}
 	}
@@ -46,6 +52,7 @@ func main() {
 	// Initialise a list of the directories
 	directoryList := []string{}
 
+	// Loop through all the files and check if their a directory or not
 	for _, i := range fileList {
 		if i.IsDir() {
 			directoryList = append(directoryList, i.Name())
@@ -80,27 +87,31 @@ func main() {
 	var foundNewTODO bool = false
 	for _, fileName := range fileList {
 
-		if fileName.IsDir() {
+		// Keep going straight away if it's a directory
+		if fileName.IsDir() || !strings.Contains(fileName.Name(), ".") {
 			continue
 		}
 
-		if !strings.Contains(fileName.Name(), ".") { // If the file name doesn't have a period in it - ignore!
+		// Get the lines of the file
+		var fileLine []string
+
+		// Set the file name
+		var filePath = fileName.Name()
+
+		// Make sure it's not one of the known unwanted files to edit
+		if slices.Contains(unwantedFiles, filePath) {
 			continue
 		}
 
-		var fileLine []string          // Get the lines of the file
-		var filePath = fileName.Name() // Set the file name
-
-		if slices.Contains(unwantedFiles, filePath) { // Make sure it's not one of the known unwanted files to edit
-			continue
-		}
-
+		// Set up variables to be used to check through eveyting that's already in place
 		var unwantedExtention bool = false
 		var updatedFile bool = false
 
-		for _, extension := range unwantedExtentions { // ignore binary files!
+		// ignore binary files!
+		for _, extension := range unwantedExtentions {
 			if strings.Contains(filePath, extension) {
 				unwantedExtention = true
+				break
 			}
 		}
 
@@ -108,7 +119,8 @@ func main() {
 			continue
 		}
 
-		file, err := os.Open(filePath) // Look for to dos in the file
+		// Look for to dos in the file
+		file, err := os.Open(filePath)
 		if err != nil {
 			return
 		}
@@ -118,15 +130,28 @@ func main() {
 		for scanner.Scan() {
 			lineNumber++
 			line := scanner.Text()
-			if strings.Contains(line, "TODO: ") && !strings.Contains(line, ") TODO") { // This is adding a number to the start of the todo as a way to keep track and act as a guard against duplicating issues!
+
+			// This is adding a number to the start of the todo as a way to keep track and act as a guard against duplicating issues!
+			if strings.Contains(line, "TODO: ") && !strings.Contains(line, ") TODO") {
+
+				// Find the with the TODO in it
 				var replaceString string = fmt.Sprintf("(#%d) TODO", CurrentNumberOfIssues+1)
+
+				// Replace the issue with the replace string which now has a number in it
 				line = strings.Replace(line, "TODO", replaceString, 1)
+
+				// Print this to the screen
 				fmt.Printf("I would like to make a github issue for: %s\nThe title is %s\nThe body is: %s on line %d\n", strings.TrimSpace(line), strings.TrimSpace(line), fileName.Name(), lineNumber)
+
+				// Incriment the number of current issues - for the next time this needs to be used
 				CurrentNumberOfIssues += 1
+
 				// Check whether the issue already exists...
 				git.MakeGithubIssue(line, fmt.Sprintf("This is from file %s on line %d\n", fileName.Name(), lineNumber))
-				updatedFile = true
-				foundNewTODO = true
+
+				// Conditional if something has been updated, some actions needs to happen outside of the loop
+				updatedFile, foundNewTODO = true, true
+
 			} else if strings.Contains(line, "TODO: ") && strings.Contains(line, ") TODO") {
 				// This finds OLD TODOs
 
@@ -139,6 +164,8 @@ func main() {
 
 				// issue here being TOO powerful, when run on itself it deletes the if statements! Check for number?
 			}
+
+			// Regardless of whether a line has changed or not, add it into the list of lines to write back in
 			fileLine = append(fileLine, line)
 		}
 
@@ -149,6 +176,8 @@ func main() {
 
 		// Write modified content back to the file
 		if updatedFile {
+
+			// Write the result of the parsing of the file to the file again!
 			err = os.WriteFile(filePath, []byte(strings.Join(fileLine, "\n")), 0644)
 			if err != nil {
 				fmt.Println("Error writing file:", err)
@@ -156,7 +185,6 @@ func main() {
 			}
 		}
 	}
-	// MakeGithubIssue("My first GitHub Issue", "This is my first github issue from the API")
 
 	if !foundNewTODO {
 		fmt.Println("No new todo found in any file in this directory")
