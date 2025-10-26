@@ -12,6 +12,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	aphrodite "github.com/jonathon-chew/Aphrodite"
 )
 
 // (#24) TODO: Pretty printing for better reading?
@@ -293,9 +295,9 @@ func NewGitTag(argument string) error {
 		return err
 	}
 
-	fmt.Println("New latest tag:", newTag)
+	aphrodite.PrintInfo(fmt.Sprintf("New latest tag:%s", newTag))
 
-	fmt.Println("Do you want to push the new tag to git?")
+	aphrodite.PrintBold("Cyan", "Do you want to push the new tag to git?")
 
 	var userChoicePushToGit string
 	_, ErrGettingUserChioce := fmt.Scan(&userChoicePushToGit)
@@ -304,11 +306,13 @@ func NewGitTag(argument string) error {
 	}
 
 	if userChoicePushToGit == "y" || userChoicePushToGit == "Y" || userChoicePushToGit == "yes" || userChoicePushToGit == "Yes" || userChoicePushToGit == "YES" {
+		aphrodite.PrintInfo("Pushing to remote git respository.")
 		tagPushCmd := exec.Command("git", "push", "--tags")
 		ErrPushingTags := tagPushCmd.Run()
 		if ErrPushingTags != nil {
 			return ErrPushingTags
 		}
+		aphrodite.PrintInfo("Successfully pushed.")
 	}
 
 	return nil
