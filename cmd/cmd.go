@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	aphrodite "github.com/jonathon-chew/Aphrodite"
@@ -83,8 +84,9 @@ func CLI(CommandLineArguments []string) error {
 			}
 
 			return nil
+
 		case "--version", "-version", "-v":
-			fmt.Printf("v0.0.4\n")
+			fmt.Printf("v0.1.1\n")
 
 		case "--help", "-help", "-h":
 
@@ -99,8 +101,51 @@ func CLI(CommandLineArguments []string) error {
 
 			aphrodite.PrintBold("Cyan", "Version\n")
 			aphrodite.PrintColour("Green", "Version Number can be passed in with the version flag\n\n")
-		}
 
+			aphrodite.PrintBold("cyan", "Tags")
+			aphrodite.PrintColour("Green", "Returns the latest tag following the format v[number].[number].[number]\n\n")
+
+			aphrodite.PrintBold("cyan", "Increment Tag")
+			aphrodite.PrintColour("Green", "Finds the biggest version number in the format format v[number].[number].[number] and adds 1 to the major / minor / patch numbers\n\n")
+
+		case "--tags", "-tags", "-t", "--tag", "-tag":
+			version, ErrGetLatestTag := git.GetLatestTag()
+			if ErrGetLatestTag != nil {
+				return ErrGetLatestTag
+			}
+			fmt.Println(version)
+
+		case "--increment-tag", "-increment-tag", "-i", "--incrementtag", "-incrementtag":
+			var argument string
+			if len(CommandLineArguments) > index+1 {
+				argument = CommandLineArguments[index+1]
+			} else {
+				argument = ""
+			}
+			ErrMakingNewTag := git.NewGitTag(argument)
+			if ErrMakingNewTag != nil {
+				return ErrMakingNewTag
+			}
+
+		case "--open", "-open", "-o":
+			url, ErrGetRemote := git.GetRemoteOrigin()
+			if ErrGetRemote != nil {
+				return ErrGetRemote
+			}
+
+			url = strings.TrimSpace(url)
+
+			cmd := exec.Command("open", url)
+
+			ErrRun := cmd.Run()
+			if ErrRun != nil {
+				fmt.Printf("Error: %s\n", ErrRun)
+				return ErrRun
+			}
+
+			return nil
+		}
 	}
+
 	return nil
 }
