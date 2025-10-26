@@ -53,8 +53,8 @@ func main() {
 	}
 
 	// Look in the directories for a git folder
-	if slices.Contains(directoryList, "git") {
-		fmt.Printf("[ERROR]: No git folder found\n")
+	if !slices.Contains(directoryList, "git") {
+		fmt.Println("[ERROR]: No git folder found")
 		os.Exit(1)
 	}
 
