@@ -104,7 +104,12 @@ func GetRemoteOrigin() (string, error) {
 }
 
 func FindGitFolder() bool {
-	_, err := os.Lstat(".git")
+	out, err := exec.Command("go", "list", "-m", "-f", "{{.Dir}}").Output()
+	if err != nil {
+		return false
+	}
+	root := strings.TrimSpace(string(out))
+	_, err = os.Lstat(root + "/.git")
 	return err == nil
 }
 

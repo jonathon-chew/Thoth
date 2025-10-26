@@ -18,7 +18,7 @@ func main() {
 		er := cmd.CLI(os.Args[1:])
 		if er != nil {
 			fmt.Printf("Error parsing the command line argument, %v\n", er)
-			return
+			os.Exit(1)
 		} else {
 			return
 		}

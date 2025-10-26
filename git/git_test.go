@@ -1,14 +1,12 @@
-package main
+package git
 
 import (
 	"testing"
-
-	"github.com/jonathon-chew/Thoth/git"
 )
 
 func TestRemoteURL(t *testing.T) {
 	t.Logf("Testing GetRemoteOrigin")
-	url, err := git.GetRemoteOrigin()
+	url, err := GetRemoteOrigin()
 	if err != nil {
 		t.Fatalf("Failed to get remote origin: %v", err)
 	}
@@ -16,12 +14,18 @@ func TestRemoteURL(t *testing.T) {
 	t.Logf("Remote URL: %s", url)
 }
 
+func TestFindGitFolder(t *testing.T) {
+	t.Log("Testing GetGitTag")
+
+	FindGitFolder()
+}
+
 func TestGitTag(t *testing.T) {
 	t.Log("Testing GetGitTag")
 
-	if git.FindGitFolder() {
+	if FindGitFolder() {
 
-		returnString, ErrGettingTags := git.GetTags()
+		returnString, ErrGettingTags := GetTags()
 		if ErrGettingTags != nil {
 			t.Error(ErrGettingTags)
 		}
@@ -35,7 +39,7 @@ func TestGitTag(t *testing.T) {
 func TestLatestGitTag(t *testing.T) {
 	t.Log("Testing GetLatestGitTag")
 
-	returnString, ErrGettingTags := git.GetLatestTag()
+	returnString, ErrGettingTags := GetLatestTag()
 	if ErrGettingTags != nil {
 		t.Error(ErrGettingTags)
 	}
@@ -45,7 +49,7 @@ func TestLatestGitTag(t *testing.T) {
 
 func TestListIssues(t *testing.T) {
 	t.Logf("Testing ListGithubIssues")
-	returned, err := git.ListGithubIssues(false) // false is NOT passed from the CLI so will always report if it connected to github
+	returned, err := ListGithubIssues(false) // false is NOT passed from the CLI so will always report if it connected to github
 	if err != nil {
 		t.Fatalf("Failed to get remote origin: %v", err)
 	} else {
@@ -60,7 +64,7 @@ func TestListIssues(t *testing.T) {
 
 func TestGenericGit(t *testing.T) {
 	t.Logf("Testing GetRemoteOrigin")
-	GitCredentials, err := git.GenericGitRequest()
+	GitCredentials, err := GenericGitRequest()
 	if err != nil {
 		t.Fatalf("Failed to get Git data: %v", err)
 	}
