@@ -101,16 +101,16 @@ func CLI(CommandLineArguments []string) error {
 			aphrodite.PrintBold("Cyan", "Version\n")
 			aphrodite.PrintColour("Green", "Version Number can be passed in with the version flag\n\n")
 
-			aphrodite.PrintBold("cyan", "Tags")
+			aphrodite.PrintBold("cyan", "Tags\n")
 			aphrodite.PrintColour("Green", "Returns the latest tag following the format v[number].[number].[number]\n\n")
 
-			aphrodite.PrintBold("cyan", "Increment Tag")
+			aphrodite.PrintBold("cyan", "Increment Tag\n")
 			aphrodite.PrintColour("Green", "Finds the biggest version number in the format format v[number].[number].[number] and adds 1 to the major / minor / patch numbers\n\n")
 
-			aphrodite.PrintBold("cyan", "--open-issues")
+			aphrodite.PrintBold("cyan", "--open-issues\n")
 			aphrodite.PrintColour("Green", "Open the github page on the issues page to manage from there\n\n")
 
-			aphrodite.PrintBold("cyan", "--open-pull")
+			aphrodite.PrintBold("cyan", "--open-pull\n")
 			aphrodite.PrintColour("Green", "Open the github page on the pull request page to manage from there\n\n")
 
 		case "--tags", "-tags", "-t", "--tag", "-tag":
