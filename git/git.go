@@ -108,6 +108,25 @@ func FindGitFolder() bool {
 	return err == nil
 }
 
+func OpenRemoteOrigin() error {
+	url, ErrGetRemote := GetRemoteOrigin()
+	if ErrGetRemote != nil {
+		return ErrGetRemote
+	}
+
+	url = strings.TrimSpace(url)
+
+	cmd := exec.Command("open", url)
+
+	ErrRun := cmd.Run()
+	if ErrRun != nil {
+		fmt.Printf("Error: %s\n", ErrRun)
+		return ErrRun
+	}
+
+	return nil
+}
+
 // GIT TAG
 func GetTags() (string, error) {
 	cmd := exec.Command("git", "tag")
