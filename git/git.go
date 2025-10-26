@@ -134,8 +134,6 @@ func OpenRemoteOrigin(place string) error {
 		return fmt.Errorf("[ERROR]: only github.com has been implimented so far")
 	}
 
-	fmt.Printf("Opening %s Place is: %s", url, place)
-
 	cmd := exec.Command("open", url)
 
 	ErrRun := cmd.Run()
@@ -308,9 +306,9 @@ func NewGitTag(argument string) error {
 		return err
 	}
 
-	aphrodite.PrintInfo(fmt.Sprintf("New latest tag:%s", newTag))
+	aphrodite.PrintInfo(fmt.Sprintf("New latest tag:%s\n", newTag))
 
-	aphrodite.PrintBold("Cyan", "Do you want to push the new tag to git?")
+	aphrodite.PrintBold("Cyan", "Do you want to push the new tag to git?\n")
 
 	var userChoicePushToGit string
 	_, ErrGettingUserChioce := fmt.Scan(&userChoicePushToGit)
@@ -319,13 +317,13 @@ func NewGitTag(argument string) error {
 	}
 
 	if userChoicePushToGit == "y" || userChoicePushToGit == "Y" || userChoicePushToGit == "yes" || userChoicePushToGit == "Yes" || userChoicePushToGit == "YES" {
-		aphrodite.PrintInfo("Pushing to remote git respository.")
+		aphrodite.PrintInfo("Pushing to remote git respository.\n")
 		tagPushCmd := exec.Command("git", "push", "--tags")
 		ErrPushingTags := tagPushCmd.Run()
 		if ErrPushingTags != nil {
 			return ErrPushingTags
 		}
-		aphrodite.PrintInfo("Successfully pushed.")
+		aphrodite.PrintInfo("Successfully pushed.\ngit")
 	}
 
 	return nil
