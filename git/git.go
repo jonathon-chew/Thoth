@@ -304,7 +304,11 @@ func NewGitTag(argument string) error {
 	}
 
 	if userChoicePushToGit == "y" || userChoicePushToGit == "Y" || userChoicePushToGit == "yes" || userChoicePushToGit == "Yes" || userChoicePushToGit == "YES" {
-		exec.Command("git", "push", "--tags")
+		tagPushCmd := exec.Command("git", "push", "--tags")
+		ErrPushingTags := tagPushCmd.Run()
+		if ErrPushingTags != nil {
+			return ErrPushingTags
+		}
 	}
 
 	return nil
