@@ -1,6 +1,9 @@
 package git
 
 import (
+	"fmt"
+	"os"
+	"strings"
 	"testing"
 )
 
@@ -34,6 +37,44 @@ func TestGitTag(t *testing.T) {
 	} else {
 		t.Error("Could not find a git folder")
 	}
+}
+
+func TestHelpVersionMatchesLatestGitTag(t *testing.T) {
+	t.Log("Testing whether the help function version matches the latest git tag")
+
+	fileContentsBytes, err := os.ReadFile("../cmd/cmd.go")
+	if err != nil {
+		t.Errorf("There was an error opening the file %s", err)
+		return
+	}
+
+	splitFile := strings.Split(string(fileContentsBytes), "\n")
+
+	for index, line := range splitFile {
+		if strings.TrimSpace(line) == `case "--version", "-version", "-v":` {
+
+			helpVersionLine := strings.TrimSpace(splitFile[index+1])
+			helpTag := strings.Replace(helpVersionLine, `fmt.Printf("`, "", 1)
+			helpTag = strings.Replace(helpTag, `\n")`, "", 1)
+
+			actualTag, err := GetLatestTag()
+			if err != nil {
+				t.Error("Unable to get latest tag to compare")
+			}
+
+			lineShouldBe := fmt.Sprintf(`fmt.Printf("%s\n")`, actualTag)
+
+			if helpVersionLine == lineShouldBe {
+				t.Log("Versions match")
+				return
+			} else {
+				t.Errorf("Versions don't match Actual Tag: %s Version: %s", actualTag, helpTag)
+				return
+			}
+		}
+	}
+
+	t.Error("Unable to find a version line in the CMD")
 }
 
 func TestLatestGitTag(t *testing.T) {
