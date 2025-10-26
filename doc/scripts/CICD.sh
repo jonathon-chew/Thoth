@@ -2,6 +2,15 @@
 
 set -euo pipefail
 
+dry="0"
+
+while [[ $# > 0 ]]; do
+  if [[ $1 == "--dry" ]]; then
+    dry="1"
+  fi
+  shift
+done
+
 # ----------------------------
 # Styling for clarity
 # ----------------------------
@@ -48,13 +57,14 @@ fi
 # ----------------------------
 # Step 4: Incriment the tag version
 # ----------------------------
-echo -e "${CYAN} Updating git tags...${RESET}"
-
-if ./Thoth -i; then 
-  echo -e "${GREEN} Successfully updated the tags!${RESET}"
-else
-  echo -e "${RED} Failed to update the tags successfully !${RESET}"
-  exit 1
+if [[ $dry == "0" ]]; then
+  echo -e "${CYAN} Updating git tags...${RESET}"
+  if ./Thoth -i; then 
+    echo -e "${GREEN} Successfully updated the tags!${RESET}"
+  else
+    echo -e "${RED} Failed to update the tags successfully !${RESET}"
+    exit 1
+  fi
 fi
 
 echo -e "${GREEN} CI pipeline completed successfully!${RESET}"
