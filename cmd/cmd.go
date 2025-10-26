@@ -113,8 +113,15 @@ func CLI(CommandLineArguments []string) error {
 				return ErrGetLatestTag
 			}
 			fmt.Println(version)
+
 		case "--increment-tag", "-increment-tag", "-i", "--incrementtag", "-incrementtag":
-			ErrMakingNewTag := git.NewGitTag(CommandLineArguments[index+1])
+			var argument string
+			if len(CommandLineArguments) > index+1 {
+				argument = CommandLineArguments[index+1]
+			} else {
+				argument = ""
+			}
+			ErrMakingNewTag := git.NewGitTag(argument)
 			if ErrMakingNewTag != nil {
 				return ErrMakingNewTag
 			}

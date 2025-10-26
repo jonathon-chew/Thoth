@@ -152,6 +152,10 @@ func GetLatestTag() (string, error) {
 
 	for index, version := range versionList {
 
+		if len(version) < 4 {
+			continue
+		}
+
 		if !strings.Contains(version, ".") && !strings.Contains(version, "v") {
 			fmt.Printf("[WARNING]: Skipping looking at tag %s, as doesn't follow the convention v.[0-9].[0-9].[0-9]", version)
 			continue
@@ -205,7 +209,7 @@ func NewGitTag(argument string) error {
 	if ErrGetLatestTag != nil {
 		return ErrGetLatestTag
 	}
-	fmt.Println(version)
+	fmt.Println("Current latest tag: ", version)
 
 	if argument != "major" && argument != "minor" && argument != "patch" {
 		var w1 string
@@ -218,6 +222,8 @@ func NewGitTag(argument string) error {
 		}
 		if w1 != "major" && w1 != "minor" && w1 != "patch" {
 			return fmt.Errorf("[ERROR]: user input was not major, minor or patch")
+		} else {
+			argument = w1
 		}
 	}
 
@@ -237,13 +243,14 @@ func NewGitTag(argument string) error {
 	}
 	var newTag string
 
-	if argument == "major" {
+	switch argument {
+	case "major":
 		newMajor := major + 1
 		newTag = fmt.Sprintf("v%d.%d.%d", newMajor, 0, 0)
-	} else if argument != "minor" {
+	case "minor":
 		newMinor := minor + 1
 		newTag = fmt.Sprintf("v%d.%d.%d", major, newMinor, 0)
-	} else if argument != "patch" {
+	case "patch":
 		newPatch := patch + 1
 		newTag = fmt.Sprintf("v%d.%d.%d", major, minor, newPatch)
 	}
@@ -261,6 +268,8 @@ func NewGitTag(argument string) error {
 		fmt.Printf("Error: %s\n", stderr.String())
 		return err
 	}
+
+	fmt.Println("New latest tag:", newTag)
 
 	return nil
 }
