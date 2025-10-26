@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	aphrodite "github.com/jonathon-chew/Aphrodite"
@@ -85,7 +86,7 @@ func CLI(CommandLineArguments []string) error {
 			return nil
 
 		case "--version", "-version", "-v":
-			fmt.Printf("v0.0.4\n")
+			fmt.Printf("v0.1.1\n")
 
 		case "--help", "-help", "-h":
 
@@ -125,6 +126,24 @@ func CLI(CommandLineArguments []string) error {
 			if ErrMakingNewTag != nil {
 				return ErrMakingNewTag
 			}
+
+		case "--open", "-open", "-o":
+			url, ErrGetRemote := git.GetRemoteOrigin()
+			if ErrGetRemote != nil {
+				return ErrGetRemote
+			}
+
+			url = strings.TrimSpace(url)
+
+			cmd := exec.Command("open", url)
+
+			ErrRun := cmd.Run()
+			if ErrRun != nil {
+				fmt.Printf("Error: %s\n", ErrRun)
+				return ErrRun
+			}
+
+			return nil
 		}
 	}
 
