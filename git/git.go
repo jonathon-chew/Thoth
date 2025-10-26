@@ -236,18 +236,18 @@ func NewGitTag(argument string) error {
 	fmt.Println("Current latest tag: ", version)
 
 	if argument != "major" && argument != "minor" && argument != "patch" {
-		var w1 string
+		var userChoiceVersionUpdate string
 
 		fmt.Printf("Do you want to increase the major, minor or patch of the tag?\n")
 
-		_, ErrUserInput := fmt.Scanln(&w1)
+		_, ErrUserInput := fmt.Scanln(&userChoiceVersionUpdate)
 		if ErrUserInput != nil {
 			return ErrUserInput
 		}
-		if w1 != "major" && w1 != "minor" && w1 != "patch" {
+		if userChoiceVersionUpdate != "major" && userChoiceVersionUpdate != "minor" && userChoiceVersionUpdate != "patch" {
 			return fmt.Errorf("[ERROR]: user input was not major, minor or patch")
 		} else {
-			argument = w1
+			argument = userChoiceVersionUpdate
 		}
 	}
 
@@ -294,6 +294,18 @@ func NewGitTag(argument string) error {
 	}
 
 	fmt.Println("New latest tag:", newTag)
+
+	fmt.Println("Do you want to push the new tag to git?")
+
+	var userChoicePushToGit string
+	_, ErrGettingUserChioce := fmt.Scan(&userChoicePushToGit)
+	if ErrGettingUserChioce != nil {
+		return ErrGettingUserChioce
+	}
+
+	if userChoicePushToGit == "y" || userChoicePushToGit == "Y" || userChoicePushToGit == "yes" || userChoicePushToGit == "Yes" || userChoicePushToGit == "YES" {
+		exec.Command("git", "push", "--tags")
+	}
 
 	return nil
 }
