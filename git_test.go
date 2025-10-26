@@ -16,6 +16,33 @@ func TestRemoteURL(t *testing.T) {
 	t.Logf("Remote URL: %s", url)
 }
 
+func TestGitTag(t *testing.T) {
+	t.Log("Testing GetGitTag")
+
+	if git.FindGitFolder() {
+
+		returnString, ErrGettingTags := git.GetTags()
+		if ErrGettingTags != nil {
+			t.Error(ErrGettingTags)
+		}
+
+		t.Log(returnString)
+	} else {
+		t.Error("Could not find a git folder")
+	}
+}
+
+func TestLatestGitTag(t *testing.T) {
+	t.Log("Testing GetLatestGitTag")
+
+	returnString, ErrGettingTags := git.GetLatestTag()
+	if ErrGettingTags != nil {
+		t.Error(ErrGettingTags)
+	}
+
+	t.Log(returnString)
+}
+
 func TestListIssues(t *testing.T) {
 	t.Logf("Testing ListGithubIssues")
 	returned, err := git.ListGithubIssues(false) // false is NOT passed from the CLI so will always report if it connected to github

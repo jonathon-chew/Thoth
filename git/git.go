@@ -9,11 +9,14 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"slices"
+	"strconv"
 	"strings"
 )
 
 // (#24) TODO: Pretty printing for better reading?
 
+// GITHUB STRUCTS
 type Assignee struct {
 	Login string `json:"login"`
 	Type  string `json:"type"`
@@ -81,6 +84,7 @@ type Credentials struct {
 	Token string
 }
 
+// UTILS
 func GetRemoteOrigin() (string, error) {
 	cmd := exec.Command("git", "config", "--get", "remote.origin.url")
 
@@ -99,6 +103,169 @@ func GetRemoteOrigin() (string, error) {
 	return out.String(), nil
 }
 
+func FindGitFolder() bool {
+	_, err := os.Lstat(".git")
+	return err == nil
+}
+
+// GIT TAG
+func GetTags() (string, error) {
+	cmd := exec.Command("git", "tag")
+
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		fmt.Printf("Error: %s\n", stderr.String())
+		return "", err
+	}
+
+	versions := out.String()
+
+	return versions, nil
+}
+
+func GetLatestTag() (string, error) {
+
+	if !FindGitFolder() {
+		return "", fmt.Errorf("[Error]: Unable to find a git folder in the current directory")
+	}
+
+	versions, err := GetTags()
+	if err != nil {
+		return "", fmt.Errorf("[Error]: Unable to successfully get the tags\n ")
+	}
+
+	versionList := strings.Split(versions, "\n")
+
+	// If the list is only 1 item long it's the biggest, so early return
+	if len(versionList) == 1 {
+		return versions, nil
+	}
+
+	var biggestMajor, biggestMinor, biggestPatch int
+	possibleVersions := versionList
+
+	for index, version := range versionList {
+
+		if !strings.Contains(version, ".") && !strings.Contains(version, "v") {
+			fmt.Printf("[WARNING]: Skipping looking at tag %s, as doesn't follow the convention v.[0-9].[0-9].[0-9]", version)
+			continue
+			// return "", fmt.Errorf("[ERROR] unable to find periods in the version tags")
+		}
+
+		major, ErrMajorConv := strconv.Atoi(strings.Split(version[1:], ".")[0])
+		minor, ErrMinorConv := strconv.Atoi(strings.Split(version[1:], ".")[1])
+		patch, ErrPatchConv := strconv.Atoi(strings.Split(version[1:], ".")[2])
+
+		if ErrMajorConv != nil && ErrMinorConv != nil && ErrPatchConv != nil {
+			return "", fmt.Errorf("[ERROR]: There was an error converting %s, %s, %s", strings.Split(version[1:], ".")[0], strings.Split(version[1:], ".")[1], strings.Split(version[1:], ".")[2])
+		}
+
+		if major > biggestMajor {
+			possibleVersions = versionList[index:]
+		} else if major < biggestMajor {
+			possibleVersions = append(possibleVersions[:index], possibleVersions[index+1:]...)
+		}
+
+		if len(possibleVersions) == 1 {
+			return strings.Join(versionList, " "), nil
+		}
+
+		if minor > biggestMinor && slices.Contains(possibleVersions, version) {
+			possibleVersions = versionList[index:]
+		} else if minor < biggestMinor {
+			possibleVersions = append(possibleVersions[:index], possibleVersions[index+1:]...)
+		}
+
+		if len(possibleVersions) == 1 {
+			return strings.Join(versionList, " "), nil
+		}
+
+		if patch > biggestPatch {
+			possibleVersions = versionList[index:]
+		} else if patch < biggestPatch {
+			possibleVersions = append(possibleVersions[:index], possibleVersions[index+1:]...)
+		}
+
+		if len(possibleVersions) == 1 {
+			return strings.Join(versionList, " "), nil
+		}
+	}
+
+	return strings.Join(possibleVersions, ""), nil
+}
+
+func NewGitTag(argument string) error {
+	version, ErrGetLatestTag := GetLatestTag()
+	if ErrGetLatestTag != nil {
+		return ErrGetLatestTag
+	}
+	fmt.Println(version)
+
+	if argument != "major" && argument != "minor" && argument != "patch" {
+		var w1 string
+
+		fmt.Printf("Do you want to increase the major, minor or patch of the tag?\n")
+
+		_, ErrUserInput := fmt.Scanln(&w1)
+		if ErrUserInput != nil {
+			return ErrUserInput
+		}
+		if w1 != "major" && w1 != "minor" && w1 != "patch" {
+			return fmt.Errorf("[ERROR]: user input was not major, minor or patch")
+		}
+	}
+
+	major, ErrMajorConv := strconv.Atoi(strings.Split(version[1:], ".")[0])
+	if ErrMajorConv != nil {
+		return ErrMajorConv
+	}
+
+	minor, ErrMinorConv := strconv.Atoi(strings.Split(version[1:], ".")[1])
+	if ErrMinorConv != nil {
+		return ErrMinorConv
+	}
+
+	patch, ErrPatchConv := strconv.Atoi(strings.Split(version[1:], ".")[2])
+	if ErrPatchConv != nil {
+		return ErrPatchConv
+	}
+	var newTag string
+
+	if argument == "major" {
+		newMajor := major + 1
+		newTag = fmt.Sprintf("v%d.%d.%d", newMajor, 0, 0)
+	} else if argument != "minor" {
+		newMinor := minor + 1
+		newTag = fmt.Sprintf("v%d.%d.%d", major, newMinor, 0)
+	} else if argument != "patch" {
+		newPatch := patch + 1
+		newTag = fmt.Sprintf("v%d.%d.%d", major, minor, newPatch)
+	}
+
+	cmd := exec.Command("git", "tag", newTag)
+
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		fmt.Printf("Error: %s\n", stderr.String())
+		return err
+	}
+
+	return nil
+}
+
+// MAKE A GIT REQUEST
 func GenericGitRequest() (Credentials, error) {
 	remoteOrigin, err := GetRemoteOrigin()
 	var credentials Credentials
@@ -125,6 +292,7 @@ func GenericGitRequest() (Credentials, error) {
 	}
 }
 
+// LIST GIT ISSUES
 func ListGithubIssues(passedFromCLI bool) ([]GithubIssueResponse, error) {
 
 	var ResponseInstance []GithubIssueResponse
@@ -240,6 +408,7 @@ func MakeGithubIssue(TITLE, BODY string) error {
 	return nil
 }
 
+// REMOVE GIT ISSUES
 // (#2) TODO: Add the ability to remove to dos which have been closed on github
 func RemoveLineDueToGithubIssue(line string, foundGithubIssues []GithubIssueResponse) (bool, error) {
 

@@ -99,8 +99,19 @@ func CLI(CommandLineArguments []string) error {
 
 			aphrodite.PrintBold("Cyan", "Version\n")
 			aphrodite.PrintColour("Green", "Version Number can be passed in with the version flag\n\n")
+		case "--tags", "-tags", "-t", "--tag", "-tag":
+			version, ErrGetLatestTag := git.GetLatestTag()
+			if ErrGetLatestTag != nil {
+				return ErrGetLatestTag
+			}
+			fmt.Println(version)
+		case "--increment-tag", "-increment-tag", "-i", "--incrementtag", "-incrementtag":
+			ErrMakingNewTag := git.NewGitTag(CommandLineArguments[index+1])
+			if ErrMakingNewTag != nil {
+				return ErrMakingNewTag
+			}
 		}
-
 	}
+
 	return nil
 }
