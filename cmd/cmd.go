@@ -83,6 +83,7 @@ func CLI(CommandLineArguments []string) error {
 			}
 
 			return nil
+
 		case "--version", "-version", "-v":
 			fmt.Printf("v0.0.4\n")
 
@@ -99,6 +100,13 @@ func CLI(CommandLineArguments []string) error {
 
 			aphrodite.PrintBold("Cyan", "Version\n")
 			aphrodite.PrintColour("Green", "Version Number can be passed in with the version flag\n\n")
+
+			aphrodite.PrintBold("cyan", "Tags")
+			aphrodite.PrintColour("Green", "Returns the latest tag following the format v[number].[number].[number]\n\n")
+
+			aphrodite.PrintBold("cyan", "Increment Tag")
+			aphrodite.PrintColour("Green", "Finds the biggest version number in the format format v[number].[number].[number] and adds 1 to the major / minor / patch numbers\n\n")
+
 		case "--tags", "-tags", "-t", "--tag", "-tag":
 			version, ErrGetLatestTag := git.GetLatestTag()
 			if ErrGetLatestTag != nil {
