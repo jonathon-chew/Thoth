@@ -59,7 +59,7 @@ fi
 # ----------------------------
 if [[ $dry == "0" ]]; then
 gitResponse=$(git status --porcelain)
-  if [ -z "$status" ]; then
+  if [ -z "$gitResponse" ]; then
     echo "${GREEN} Working tree clean — no changes to commit.${RESET}"
   else
     echo "${RED}There are uncommitted changes:${RESET}"
