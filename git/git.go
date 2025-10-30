@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	aphrodite "github.com/jonathon-chew/Aphrodite"
+	utils "github.com/jonathon-chew/Thoth/Utils"
 )
 
 // (#24) TODO: Pretty printing for better reading?
@@ -106,13 +107,16 @@ func GetRemoteOrigin() (string, error) {
 }
 
 func FindGitFolder() bool {
-	out, err := exec.Command("go", "list", "-m", "-f", "{{.Dir}}").Output()
-	if err != nil {
-		return false
+
+	directoryList := utils.MakeDirectoryList(utils.FindFilesInCurrentDirectory())
+
+	// Look in the directories for a git folder
+	if !slices.Contains(directoryList, ".git") {
+		fmt.Println("[ERROR]: No git folder found")
+		return false // recursively look?
 	}
-	root := strings.TrimSpace(string(out))
-	_, err = os.Lstat(root + "/.git")
-	return err == nil
+
+	return true
 }
 
 func OpenRemoteOrigin(place string) error {

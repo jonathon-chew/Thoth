@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	utils "github.com/jonathon-chew/Thoth/Utils"
 	"github.com/jonathon-chew/Thoth/cmd"
 	"github.com/jonathon-chew/Thoth/git"
 )
@@ -29,39 +30,13 @@ func main() {
 			return
 		}
 	}
-
-	// Look for all the file in the current directory, but not the sub folders!
-	var files, issue = os.Open(".")
-	if issue != nil {
-		fmt.Printf("Error opening directory %s\n", issue)
-		os.Exit(1)
-	}
-
-	// List the files in the folder
-	fileList, err := files.Readdir(0)
-	if err != nil {
-		fmt.Printf("Error reading directory, %s\n", err)
-		os.Exit(1)
-	}
-
 	// CHECK to see if their is a git folder
 	// Initilaise the known files to ignore!
 	unwantedFiles := []string{".localized", ".DS_Store", ".gitignore"}
 	unwantedExtentions := []string{".app", ".exe", ".elf", ".md"}
+	fileList := utils.FindFilesInCurrentDirectory()
 
-	// Initialise a list of the directories
-	directoryList := []string{}
-
-	// Loop through all the files and check if their a directory or not
-	for _, i := range fileList {
-		if i.IsDir() {
-			directoryList = append(directoryList, i.Name())
-		}
-	}
-
-	// Look in the directories for a git folder
-	if !slices.Contains(directoryList, ".git") {
-		fmt.Println("[ERROR]: No git folder found")
+	if !git.FindGitFolder() {
 		os.Exit(1)
 	}
 

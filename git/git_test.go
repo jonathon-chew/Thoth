@@ -5,13 +5,15 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	aphrodite "github.com/jonathon-chew/Aphrodite"
 )
 
 func TestRemoteURL(t *testing.T) {
 	t.Logf("Testing GetRemoteOrigin")
 	url, err := GetRemoteOrigin()
 	if err != nil {
-		t.Fatalf("Failed to get remote origin: %v", err)
+		t.Fatal(aphrodite.ReturnError(fmt.Sprintf("Failed to get remote origin: %v", err)))
 	}
 
 	t.Logf("Remote URL: %s", url)
@@ -20,31 +22,37 @@ func TestRemoteURL(t *testing.T) {
 func TestFindGitFolder(t *testing.T) {
 	t.Log("Testing GetGitTag")
 
-	FindGitFolder()
+	os.Chdir("../")
+
+	if FindGitFolder() {
+		t.Log("Successfully found a git folder")
+	} else {
+		t.Error(aphrodite.ReturnError("Did not find a git folder"))
+	}
 }
 
 func TestGitTag(t *testing.T) {
 	t.Log("Testing GetGitTag")
 
-	if FindGitFolder() {
-
-		returnString, ErrGettingTags := GetTags()
-		if ErrGettingTags != nil {
-			t.Error(ErrGettingTags)
-		}
-
-		t.Log(returnString)
-	} else {
-		t.Error("Could not find a git folder")
+	returnString, ErrGettingTags := GetTags()
+	if ErrGettingTags != nil {
+		t.Error(aphrodite.ReturnError(fmt.Sprintf("%s", ErrGettingTags)))
 	}
+
+	t.Log(returnString)
 }
 
 func TestHelpVersionMatchesLatestGitTag(t *testing.T) {
 	t.Log("Testing whether the help function version matches the latest git tag")
 
-	fileContentsBytes, err := os.ReadFile("../cmd/cmd.go")
+	_, ErrFindingFile := os.Stat("./cmd/cmd.go")
+	if ErrFindingFile != nil {
+		t.Error(aphrodite.ReturnError("[Error]: Could not find the file"))
+	}
+
+	fileContentsBytes, err := os.ReadFile("./cmd/cmd.go")
 	if err != nil {
-		t.Errorf("There was an error opening the file %s", err)
+		t.Error(aphrodite.ReturnError(fmt.Sprintf("There was an error opening the file %s", err)))
 		return
 	}
 
@@ -92,7 +100,7 @@ func TestListIssues(t *testing.T) {
 	t.Logf("Testing ListGithubIssues")
 	returned, err := ListGithubIssues(false) // false is NOT passed from the CLI so will always report if it connected to github
 	if err != nil {
-		t.Fatalf("Failed to get remote origin: %v", err)
+		t.Fatal(aphrodite.ReturnError(fmt.Sprintf("Failed to get remote origin: %v", err)))
 	} else {
 		t.Logf("Found issues %d", len(returned))
 	}
@@ -107,7 +115,7 @@ func TestGenericGit(t *testing.T) {
 	t.Logf("Testing GetRemoteOrigin")
 	GitCredentials, err := GenericGitRequest()
 	if err != nil {
-		t.Fatalf("Failed to get Git data: %v", err)
+		t.Fatal(aphrodite.ReturnError(fmt.Sprintf("Failed to get Git data: %v", err)))
 	}
 
 	t.Logf("Owner: %s, Repo: %s, Token: %s", GitCredentials.Owner, GitCredentials.Repo, GitCredentials.Token)
