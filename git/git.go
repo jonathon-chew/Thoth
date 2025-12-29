@@ -322,7 +322,8 @@ func NewGitTag(argument string) error {
 
 	if userChoicePushToGit == "y" || userChoicePushToGit == "Y" || userChoicePushToGit == "yes" || userChoicePushToGit == "Yes" || userChoicePushToGit == "YES" {
 		aphrodite.PrintInfo("Pushing to remote git respository.\n")
-		tagPushCmd := exec.Command("git", "push", "--tags")
+		// git push --tags --force-with-lease=false
+		tagPushCmd := exec.Command("git", "push", "--tags", "--force-with-lease=false")
 		ErrPushingTags := tagPushCmd.Run()
 		if ErrPushingTags != nil {
 			return ErrPushingTags
