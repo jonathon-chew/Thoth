@@ -328,7 +328,7 @@ func NewGitTag(argument string) error {
 		if ErrPushingTags != nil {
 			return ErrPushingTags
 		}
-		aphrodite.PrintInfo("Successfully pushed.\ngit")
+		aphrodite.PrintInfo("Successfully pushed.\n")
 	}
 
 	return nil

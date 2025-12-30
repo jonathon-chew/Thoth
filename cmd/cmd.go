@@ -85,7 +85,7 @@ func CLI(CommandLineArguments []string) error {
 			return nil
 
 		case "--version", "-version", "-v":
-			fmt.Printf("v0.2.4\n")
+			fmt.Printf("v0.2.6\n")
 
 		case "--help", "-help", "-h":
 
