@@ -17,8 +17,6 @@ import (
 	utils "github.com/jonathon-chew/Thoth/Utils"
 )
 
-// (#24) TODO: Pretty printing for better reading?
-
 // GITHUB STRUCTS
 type Assignee struct {
 	Login string `json:"login"`
@@ -71,7 +69,7 @@ type GithubIssueResponse struct {
 	Status             string     `json:"status"`
 }
 
-var GithubStatusResponseMeanings = map[string]string{
+var HTTPStatusResponseMeanings = map[string]string{
 	"201": "Created",
 	"400": "Bad Request",
 	"403": "Forbidden",
@@ -344,6 +342,7 @@ func GenericGitRequest() (Credentials, error) {
 	}
 
 	if strings.Contains(remoteOrigin, "github") {
+
 		gitUrl := strings.ReplaceAll(remoteOrigin, ".git", "")
 		gitDetails := strings.Split(strings.ReplaceAll(gitUrl, "https://github.com/", ""), "/")
 
@@ -352,12 +351,38 @@ func GenericGitRequest() (Credentials, error) {
 		credentials.Token = os.Getenv("GH_PERSONAL_TOKEN")
 
 		if credentials.Token == "" {
-			return credentials, errors.New("no GH_PERSONAL_TOKEN in the environment")
+			_, VarExists := os.LookupEnv("GH_PERSONAL_TOKEN")
+			if VarExists {
+				return credentials, errors.New("GH_PERSONAL_TOKEN is empty")
+			} else {
+				return credentials, errors.New("no GH_PERSONAL_TOKEN in the environment")
+			}
 		}
 
 		return credentials, nil
+
+	} else if strings.Contains(remoteOrigin, "gitlab") {
+
+		gitUrl := strings.ReplaceAll(remoteOrigin, ".git", "")
+		gitDetails := strings.Split(strings.ReplaceAll(gitUrl, "https://gitlab.", ""), "/")
+
+		credentials.Owner = gitDetails[0] // check this still applies for gitlab - as i'm not sure it does, this might need to be a git call
+		credentials.Repo = strings.Replace(gitDetails[1], "\n", "", -1)
+		credentials.Token = os.Getenv("GL_PERSONAL_TOKEN")
+
+		if credentials.Token == "" {
+			_, VarExists := os.LookupEnv("GL_PERSONAL_TOKEN")
+			if VarExists {
+				return credentials, errors.New("GL_PERSONAL_TOKEN is empty")
+			} else {
+				return credentials, errors.New("no GL_PERSONAL_TOKEN in the environment")
+			}
+		}
+
+		return credentials, nil
+
 	} else {
-		return credentials, fmt.Errorf("the remote origin is not github, and the ability to create issues for %s is not currently implimented", remoteOrigin)
+		return credentials, fmt.Errorf("the remote origin is not github/gitlab, and the ability to create issues for %s is not currently implimented", remoteOrigin)
 	}
 }
 
@@ -389,10 +414,8 @@ func ListGithubIssues(passedFromCLI bool) ([]GithubIssueResponse, error) {
 
 	defer req.Body.Close()
 
-	// (#26) TODO: Decide on whether or not you want this printed out EVERY time the programme is run
-
 	if !passedFromCLI {
-		fmt.Printf("The response was: %s, %s\n\n", req.Status, GithubStatusResponseMeanings[req.Status])
+		fmt.Printf("The response was: %s, %s\n\n", req.Status, HTTPStatusResponseMeanings[req.Status])
 	}
 
 	responseBody, err := io.ReadAll(req.Body)
@@ -472,7 +495,7 @@ func MakeGithubIssue(TITLE, BODY string) error {
 		return fmt.Errorf("the response was not positive, %d", req.StatusCode)
 	}
 
-	fmt.Printf("The response was: %s, %s\n", req.Status, GithubStatusResponseMeanings[req.Status])
+	fmt.Printf("The response was: %s, %s\n", req.Status, HTTPStatusResponseMeanings[req.Status])
 
 	return nil
 }
@@ -535,11 +558,11 @@ func CloseGithubIssue(closeIssue *GithubIssueResponse) error {
 	// Make the request
 	closeGithubIssueResponse, clientErr := client.Do(request)
 	if clientErr != nil {
-		fmt.Printf("The response from github was: %s\n", GithubStatusResponseMeanings[closeGithubIssueResponse.Status])
+		fmt.Printf("The response from github was: %s\n", HTTPStatusResponseMeanings[closeGithubIssueResponse.Status])
 		return clientErr
 	}
 
-	fmt.Printf("The response from github was: %s\n", GithubStatusResponseMeanings[closeGithubIssueResponse.Status])
+	fmt.Printf("The response from github was: %s\n", HTTPStatusResponseMeanings[closeGithubIssueResponse.Status])
 
 	// Return if error?
 	return nil
