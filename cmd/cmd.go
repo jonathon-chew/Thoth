@@ -28,34 +28,34 @@ func CLI(CommandLineArguments []string) error {
 				return err
 			}
 
-			var closedFlag, openFlag bool = false, false
+			var closedFlag, openFlag bool = false, true
 			// Check for extra flags
 			if len(os.Args) > 2 {
 				for _, extraCommand := range os.Args[2:] {
 					switch extraCommand {
 					case "--closed", "-closed", "-c":
 						closedFlag = true
-					case "--open", "-open", "-o":
-						openFlag = true
+					case "--all", "-all", "-a":
+						openFlag = false
 					}
 				}
 			}
 
 			for index, issue := range returned {
 				if closedFlag && issue.State == "closed" {
-					fmt.Printf("%d The issue title is:%s\nThe body is:%s\nThe status is:%s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, aphrodite.ReturnWarning(issue.State))
+					fmt.Printf("%d The issue title is:\n%s\nThe body is: %s\nThe status is: %s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, aphrodite.ReturnWarning(issue.State))
 					fmt.Printf("______________\n")
 					continue
 				}
 
 				if openFlag && issue.State == "open" {
-					fmt.Printf("%d The issue title is:%s\nThe body is:%s\nThe status is:%s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, aphrodite.ReturnInfo(issue.State))
+					fmt.Printf("%d The issue title is:\n%s\nThe body is: %s\nThe status is: %s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, aphrodite.ReturnInfo(issue.State))
 					fmt.Printf("______________\n")
 					continue
 				}
 
 				if !closedFlag && !openFlag {
-					fmt.Printf("%d The issue title is:%s\nThe body is:%s\nThe status is:%s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, issue.State)
+					fmt.Printf("%d The issue title is:\n%s\nThe body is: %s\nThe status is: %s\n\n", index+1, strings.TrimSpace(issue.Title), issue.Body, issue.State)
 					fmt.Printf("______________\n")
 				}
 			}
