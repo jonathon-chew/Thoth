@@ -296,7 +296,7 @@ func NewGitTag(argument string) error {
 		newTag = fmt.Sprintf("v%d.%d.%d", major, minor, newPatch)
 	}
 
-	cmd := exec.Command("git", "tag", newTag)
+	cmd := exec.Command("git", "tag", newTag, "-m", "Release Version: "+strings.ReplaceAll(newTag, "v", ""))
 
 	var out bytes.Buffer
 	var stderr bytes.Buffer
