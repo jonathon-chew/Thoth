@@ -294,6 +294,8 @@ func NewGitTag(argument string) error {
 	case "patch":
 		newPatch := patch + 1
 		newTag = fmt.Sprintf("v%d.%d.%d", major, minor, newPatch)
+	default:
+		return errors.New(argument + " was not recognised as a valid command")
 	}
 
 	cmd := exec.Command("git", "tag", newTag, "-m", "Release Version: "+strings.ReplaceAll(newTag, "v", ""))
