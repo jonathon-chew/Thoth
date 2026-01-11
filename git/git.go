@@ -17,6 +17,7 @@ import (
 var HTTPStatusResponseMeanings = map[string]string{
 	"201": "Created",
 	"400": "Bad Request",
+	"401": "Unauthorized",
 	"403": "Forbidden",
 	"404": "Resource not found",
 	"410": "Gone",
