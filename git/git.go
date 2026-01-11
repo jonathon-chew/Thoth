@@ -110,6 +110,10 @@ func GetTags() (string, error) {
 
 	versions := out.String()
 
+	if len(versions) == 0 {
+		return "", nil
+	}
+
 	return versions, nil
 }
 
@@ -122,6 +126,11 @@ func GetLatestTag() (string, error) {
 	versions, err := GetTags()
 	if err != nil {
 		return "", fmt.Errorf("[Error]: Unable to successfully get the tags\n ")
+	}
+
+	if versions == "" {
+		// There was nothing back from Get Tags therefore we should make one
+		return "", nil
 	}
 
 	versionList := strings.Split(versions, "\n")
@@ -188,11 +197,59 @@ func GetLatestTag() (string, error) {
 	return strings.Join(possibleVersions, ""), nil
 }
 
+func MakeTag(newTag string) error {
+	cmd := exec.Command("git", "tag", newTag, "-m", "Release Version: "+strings.ReplaceAll(newTag, "v", ""))
+
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		fmt.Printf("Error: %s\n", stderr.String())
+		return err
+	}
+
+	aphrodite.PrintInfo(fmt.Sprintf("New latest tag:%s\n", newTag))
+
+	aphrodite.PrintBold("Cyan", "Do you want to push the new tag to git?\n")
+
+	var userChoicePushToGit string
+	_, ErrGettingUserChioce := fmt.Scan(&userChoicePushToGit)
+	if ErrGettingUserChioce != nil {
+		return ErrGettingUserChioce
+	}
+
+	if userChoicePushToGit == "y" || userChoicePushToGit == "Y" || userChoicePushToGit == "yes" || userChoicePushToGit == "Yes" || userChoicePushToGit == "YES" {
+		aphrodite.PrintInfo("Pushing to remote git respository.\n")
+		// git push --tags --force-with-lease=false
+		tagPushCmd := exec.Command("git", "push", "--tags", "--force-with-lease=false")
+		ErrPushingTags := tagPushCmd.Run()
+		if ErrPushingTags != nil {
+			return ErrPushingTags
+		}
+		aphrodite.PrintInfo("Successfully pushed.\n")
+	}
+
+	return nil
+}
+
 func NewGitTag(argument string) error {
 	version, ErrGetLatestTag := GetLatestTag()
 	if ErrGetLatestTag != nil {
 		return ErrGetLatestTag
 	}
+
+	if version == "" {
+		ErrMakingTag := MakeTag("v0.1.0")
+		if ErrMakingTag != nil {
+			return ErrMakingTag
+		}
+		return nil
+	}
+
 	fmt.Println("Current latest tag: ", version)
 
 	if argument != "major" && argument != "minor" && argument != "patch" {
@@ -241,39 +298,9 @@ func NewGitTag(argument string) error {
 		return errors.New(argument + " was not recognised as a valid command")
 	}
 
-	cmd := exec.Command("git", "tag", newTag, "-m", "Release Version: "+strings.ReplaceAll(newTag, "v", ""))
-
-	var out bytes.Buffer
-	var stderr bytes.Buffer
-
-	cmd.Stdout = &out
-	cmd.Stderr = &stderr
-
-	err := cmd.Run()
-	if err != nil {
-		fmt.Printf("Error: %s\n", stderr.String())
-		return err
-	}
-
-	aphrodite.PrintInfo(fmt.Sprintf("New latest tag:%s\n", newTag))
-
-	aphrodite.PrintBold("Cyan", "Do you want to push the new tag to git?\n")
-
-	var userChoicePushToGit string
-	_, ErrGettingUserChioce := fmt.Scan(&userChoicePushToGit)
-	if ErrGettingUserChioce != nil {
-		return ErrGettingUserChioce
-	}
-
-	if userChoicePushToGit == "y" || userChoicePushToGit == "Y" || userChoicePushToGit == "yes" || userChoicePushToGit == "Yes" || userChoicePushToGit == "YES" {
-		aphrodite.PrintInfo("Pushing to remote git respository.\n")
-		// git push --tags --force-with-lease=false
-		tagPushCmd := exec.Command("git", "push", "--tags", "--force-with-lease=false")
-		ErrPushingTags := tagPushCmd.Run()
-		if ErrPushingTags != nil {
-			return ErrPushingTags
-		}
-		aphrodite.PrintInfo("Successfully pushed.\n")
+	ErrMakingTag := MakeTag(newTag)
+	if ErrMakingTag != nil {
+		return ErrMakingTag
 	}
 
 	return nil
