@@ -11,7 +11,7 @@ import (
 )
 
 func CLI(CommandLineArguments []string) error {
-	aphrodite.PrintColour("Cyan", "I have found additional command line arguments, switching to CLI mode\n")
+	// aphrodite.PrintColour("Cyan", "I have found additional command line arguments, switching to CLI mode\n")
 
 	var NoIssues error = errors.New("no GitHub issues found")
 
