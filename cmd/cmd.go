@@ -1,12 +1,9 @@
 package cmd
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 
 	aphrodite "github.com/jonathon-chew/Aphrodite"
@@ -24,45 +21,11 @@ func CLI(CommandLineArguments []string) error {
 		case "--check", "-c":
 			entries := utils.MakeDirectoryList(utils.FindFilesInCurrentDirectory())
 
-			currentWorkingDirectory, ErrGettingWorkingDirectory := os.Getwd()
-			if ErrGettingWorkingDirectory != nil {
-				return fmt.Errorf("getwd: %w", ErrGettingWorkingDirectory)
-			}
-
 			for _, entry := range entries {
 
-				dirPath := filepath.Join(currentWorkingDirectory, entry)
-
-				// Fast repo check: is there a .git directory / file?
-				if _, err := os.Stat(filepath.Join(dirPath, ".git")); err != nil {
-					continue // not a git repo (or not accessible)
-				}
-
-				cmd := exec.Command("git", "status", "--porcelain")
-				cmd.Dir = dirPath
-
-				var out, stderr bytes.Buffer
-				cmd.Stdout = &out
-				cmd.Stderr = &stderr
-
-				if err := cmd.Run(); err != nil {
-					return fmt.Errorf("git status failed in %s: %s", dirPath, stderr.String())
-				}
-
-				if out.Len() > 0 {
-					fmt.Printf("%s has a git update\n%s\n", entry, out.String())
-				}
-
-				aheadCmd := exec.Command("git", "rev-list", "--count", "@{u}..HEAD")
-				aheadCmd.Dir = dirPath
-
-				var aheadOut bytes.Buffer
-				aheadCmd.Stdout = &aheadOut
-
-				if err := aheadCmd.Run(); err == nil {
-					if strings.TrimSpace(aheadOut.String()) != "0" {
-						fmt.Printf("%s has commits to push\n", entry)
-					}
+				ErrCheckingForUpdate := git.CheckForGitUpdate(entry)
+				if ErrCheckingForUpdate != nil {
+					return ErrCheckingForUpdate
 				}
 
 			}

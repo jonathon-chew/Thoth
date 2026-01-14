@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -359,4 +360,51 @@ func GenericGitRequest() (Credentials, error) {
 	} else {
 		return credentials, fmt.Errorf("the remote origin is not github/gitlab, and the ability to create issues for %s is not currently implimented", remoteOrigin)
 	}
+}
+
+// Entry is the folder that you would like to check if their is an update to git in it.
+// Only does it in the root directory, if recusively going into folders it won't return false positives
+// The only time would be a submodule
+func CheckForGitUpdate(entry string) error {
+
+	currentWorkingDirectory, ErrGettingWorkingDirectory := os.Getwd()
+	if ErrGettingWorkingDirectory != nil {
+		return fmt.Errorf("getwd: %w", ErrGettingWorkingDirectory)
+	}
+
+	dirPath := filepath.Join(currentWorkingDirectory, entry)
+
+	// Fast repo check: is there a .git directory / file?
+	if _, err := os.Stat(filepath.Join(dirPath, ".git")); err != nil {
+		return errors.New("not a git folder") // not a git repo (or not accessible)
+	}
+
+	cmd := exec.Command("git", "status", "--porcelain")
+	cmd.Dir = dirPath
+
+	var out, stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("git status failed in %s: %s", dirPath, stderr.String())
+	}
+
+	if out.Len() > 0 {
+		fmt.Printf("%s has a git update\n%s\n", entry, out.String())
+	}
+
+	aheadCmd := exec.Command("git", "rev-list", "--count", "@{u}..HEAD")
+	aheadCmd.Dir = dirPath
+
+	var aheadOut bytes.Buffer
+	aheadCmd.Stdout = &aheadOut
+
+	if err := aheadCmd.Run(); err == nil {
+		if strings.TrimSpace(aheadOut.String()) != "0" {
+			fmt.Printf("%s has commits to push\n", entry)
+		}
+	}
+
+	return nil
 }
