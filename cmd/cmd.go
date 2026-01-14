@@ -135,7 +135,7 @@ func CLI(CommandLineArguments []string) error {
 			return nil
 
 		case "--version", "-version", "-v":
-			fmt.Printf("v0.2.6\n")
+			fmt.Printf("v0.5.3\n")
 
 		case "--help", "-help", "-h":
 
@@ -162,6 +162,9 @@ func CLI(CommandLineArguments []string) error {
 
 			aphrodite.PrintBold("cyan", "--open-pull\n")
 			aphrodite.PrintColour("Green", "Open the github page on the pull request page to manage from there\n\n")
+
+			aphrodite.PrintBold("cyan", "--check\n")
+			aphrodite.PrintColour("Green", "Check all folders 1 level deep to see if there are any updates required to push/pull\n\n")
 
 		case "--tags", "-tags", "-t", "--tag", "-tag":
 			version, ErrGetLatestTag := git.GetLatestTag()

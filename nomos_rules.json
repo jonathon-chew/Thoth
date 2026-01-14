@@ -8,4 +8,4 @@
 				"exported-identifiers-have-comments": true,
 				"const-in-caps": true,
 				"no-naked-returns": true
-			}
+}
