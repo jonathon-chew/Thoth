@@ -52,6 +52,19 @@ func CLI(CommandLineArguments []string) error {
 				if out.Len() > 0 {
 					fmt.Printf("%s has a git update\n%s\n", entry, out.String())
 				}
+
+				aheadCmd := exec.Command("git", "rev-list", "--count", "@{u}..HEAD")
+				aheadCmd.Dir = dirPath
+
+				var aheadOut bytes.Buffer
+				aheadCmd.Stdout = &aheadOut
+
+				if err := aheadCmd.Run(); err == nil {
+					if strings.TrimSpace(aheadOut.String()) != "0" {
+						fmt.Printf("%s has commits to push\n", entry)
+					}
+				}
+
 			}
 
 		case "--get", "-get", "-g":
