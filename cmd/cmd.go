@@ -32,6 +32,10 @@ func CLI(CommandLineArguments []string) error {
 				}
 			}
 
+		case "--clone", "-cl":
+			git.CloneAllPublicRepos()
+			return nil
+
 		case "--get", "-get", "-g":
 			returned, err := git.ListGithubIssues(true)
 			if err != nil && errors.Is(err, NoIssues) {
@@ -100,7 +104,7 @@ func CLI(CommandLineArguments []string) error {
 			return nil
 
 		case "--version", "-version", "-v":
-			fmt.Printf("v0.5.3\n")
+			fmt.Printf("v0.7.0\n")
 
 		case "--help", "-help", "-h":
 
@@ -122,17 +126,20 @@ func CLI(CommandLineArguments []string) error {
 			aphrodite.PrintBold("cyan", "Increment Tag\n")
 			aphrodite.PrintColour("Green", "Finds the biggest version number in the format format v[number].[number].[number] and adds 1 to the major / minor / patch numbers\n\n")
 
-			aphrodite.PrintBold("cyan", "--open-issues\n")
+			aphrodite.PrintBold("cyan", "Open Issues\n")
 			aphrodite.PrintColour("Green", "Open the github page on the issues page to manage from there\n\n")
 
-			aphrodite.PrintBold("cyan", "--open-pull\n")
+			aphrodite.PrintBold("cyan", "Open Pull\n")
 			aphrodite.PrintColour("Green", "Open the github page on the pull request page to manage from there\n\n")
 
-			aphrodite.PrintBold("cyan", "--check\n")
+			aphrodite.PrintBold("cyan", "Check\n")
 			aphrodite.PrintColour("Green", "Check all folders 1 level deep to see if there are any updates required to push/pull\n\n")
 
 			aphrodite.PrintBold("cyan", "Commit Calendar")
 			aphrodite.PrintColour("Green", "Print to the terminal the git history activity for the last year!\n\n")
+
+			aphrodite.PrintBold("cyan", "Clone")
+			aphrodite.PrintColour("Green", "Clone all public repos into a temporary directory\n\n")
 
 		case "--tags", "-tags", "-t", "--tag", "-tag":
 			version, ErrGetLatestTag := git.GetLatestTag()
