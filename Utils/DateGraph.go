@@ -2,7 +2,10 @@ package utils
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	aphrodite "github.com/jonathon-chew/Aphrodite"
 )
@@ -11,49 +14,91 @@ type CommitMap map[string]int
 
 // Step 3: Render basic ASCII heatmap
 func RenderDateGraph(commits CommitMap) {
-	start := time.Now().AddDate(0, 0, -365)
-	for d := 0; d <= 365; d++ {
-		day := start.AddDate(0, 0, d)
-		if day.Day()%28 == 0 {
-			fmt.Print("\t" + day.Month().String() + "\n")
+	now := time.Now()
+	start := now.AddDate(0, 0, -365)
+
+	// Iterate months from start..now (inclusive)
+	first := time.Date(start.Year(), start.Month(), 1, 0, 0, 0, 0, start.Location())
+	last := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+
+	const barWidth = 31 // 31 days max
+	const gap = 1       // space before month label
+
+	for m := first; !m.After(last); m = m.AddDate(0, 1, 0) {
+		monthStart := m
+		monthEnd := m.AddDate(0, 1, 0).Add(-24 * time.Hour)
+
+		// Clamp month range to [start, now]
+		from := monthStart
+		if from.Before(start) {
+			from = start
 		}
-		key := day.Format("2006-01-02")
-		count := commits[key]
-		fmt.Print(heatChar(count))
+		to := monthEnd
+		if to.After(now) {
+			to = now
+		}
+		if from.After(to) {
+			continue
+		}
+
+		var b strings.Builder
+		for day := from; !day.After(to); day = day.AddDate(0, 0, 1) {
+			key := day.Format("2006-01-02")
+			b.WriteString(heatChar(commits[key])) // must return 1 visible char/rune
+		}
+
+		// Pad to 31 chars (not bytes)
+		line := b.String()
+
+		// Measure *visible* width (without ANSI escapes)
+		curWidth := visibleWidth(line)
+
+		if curWidth < barWidth {
+			line += strings.Repeat(" ", barWidth-curWidth)
+		}
+
+		fmt.Println(line + strings.Repeat(" ", gap) + monthStart.Month().String())
 	}
-	fmt.Println()
+}
+
+var ansiRE = regexp.MustCompile(`\x1b\[[0-9;]*m`)
+
+func visibleWidth(s string) int {
+	// Remove ANSI escape codes, then count runes
+	clean := ansiRE.ReplaceAllString(s, "")
+	return utf8.RuneCountInString(clean)
 }
 
 func heatChar(count int) string {
 	switch {
 	case count == 0: // 0 commits in a day
-		returnString, err := aphrodite.ReturnColour("Black", "§")
+		returnString, err := aphrodite.ReturnColour("Black", "_")
 		if err != nil {
 			return "§"
 		}
 		return returnString
 	case count < 2: // 1-2 commits in a day
-		returnString, err := aphrodite.ReturnColour("Red", "§")
+		returnString, err := aphrodite.ReturnColour("Red", "+")
 		if err != nil {
-			return "§"
+			return "+"
 		}
 		return returnString
 	case count < 5: //2-4 commits in a day
-		returnString, err := aphrodite.ReturnBold("Green", "§")
+		returnString, err := aphrodite.ReturnBold("Green", "+")
 		if err != nil {
-			return "§"
+			return "+"
 		}
 		return returnString
 	case count < 10: //5-9 commits in a day
-		returnString, err := aphrodite.ReturnHighIntensity("Yellow", "§")
+		returnString, err := aphrodite.ReturnHighIntensity("Yellow", "+")
 		if err != nil {
-			return "§"
+			return "+"
 		}
 		return returnString
 	default: // 10 or more commits in a day
-		returnString, err := aphrodite.ReturnHighIntensityBackgrounds("Purple", "§")
+		returnString, err := aphrodite.ReturnHighIntensityBackgrounds("Purple", "+")
 		if err != nil {
-			return "§"
+			return "+"
 		}
 		return returnString
 	}
