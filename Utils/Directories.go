@@ -2,7 +2,13 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"path/filepath"
+)
+
+const (
+	TemporaryDirectory string = "./tmp"
 )
 
 func FindFilesInCurrentDirectory() (fileList []os.FileInfo) {
@@ -37,4 +43,32 @@ func MakeDirectoryList(fileList []os.FileInfo) []string {
 	}
 
 	return directoryList
+}
+
+func NewDirectory() {
+	_, ErrLookingForFile := os.Stat(TemporaryDirectory)
+	if ErrLookingForFile == nil {
+		return
+	}
+
+	ErrMakingDir := os.Mkdir(TemporaryDirectory, os.FileMode(0755))
+	if ErrMakingDir != nil {
+		log.Fatal(ErrMakingDir)
+		return
+	}
+}
+
+func FindGitRepos(root string) []string {
+	var repos []string
+	filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if d.IsDir() && d.Name() == ".git" {
+			repos = append(repos, filepath.Dir(path))
+			return filepath.SkipDir // stop traversing this subdir
+		}
+		return nil
+	})
+	return repos
 }

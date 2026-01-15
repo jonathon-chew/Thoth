@@ -6,8 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"os"
+	"os/exec"
+	"strconv"
 	"strings"
+
+	utils "github.com/jonathon-chew/Thoth/utils"
 )
 
 // GITHUB STRUCTS
@@ -60,6 +66,17 @@ type GithubIssueResponse struct {
 	Body               string            `json:"body"`
 	Message            string            `json:"message"`
 	Status             string            `json:"status"`
+}
+
+type Repo struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Url         string `json:"html_url"`
+	Star        int    `json:"stargazers_count"`
+}
+
+type User struct {
+	Public_repos int `json:"public_repos"`
 }
 
 // LIST GIT ISSUES
@@ -243,4 +260,90 @@ func CloseGithubIssue(closeIssue *GithubIssueResponse) error {
 	// Return if error?
 	return nil
 
+}
+
+func CloneAllPublicRepos() {
+
+	userName, ErrGettingUserName := utils.GetUserInput([]byte("What is the name of the user/org you would like to clone? \n"))
+	if ErrGettingUserName != nil {
+		return
+	}
+
+	confirmPrompt, ErrGettingConfirmedPrompt := utils.GetUserInput([]byte("We're going to get everything from: " + userName + " y/Y? \n"))
+	if ErrGettingConfirmedPrompt != nil {
+		return
+	}
+
+	if confirmPrompt != "y" && confirmPrompt != "Y" {
+		os.Stdin.Write([]byte("You've elected not to carry on"))
+		return
+	}
+
+	var UserUrl string = "https://api.github.com/users/" + userName
+	userReq, err := http.Get(UserUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var userDetails User
+	if err := json.NewDecoder(userReq.Body).Decode(&userDetails); err != nil {
+		log.Fatalf("Error unmarshalling JSON: %v", err)
+	}
+
+	userReq.Body.Close()
+
+	if userDetails.Public_repos > 50 {
+		userReponse, ErrGettingConfirmLargeDownload := utils.GetUserInput([]byte("There are " + strconv.Itoa(userDetails.Public_repos) + " repos to clone - are you sure? y/Y\n"))
+		if ErrGettingConfirmLargeDownload != nil {
+
+			return
+		}
+
+		if userReponse != "y" && userReponse != "Y" {
+			log.Fatal("Too many repositories, user has elected to stop")
+			return
+		}
+	}
+
+	var RepoURL string = "https://api.github.com/users/" + userName + "/repos"
+	repoReq, err := http.Get(RepoURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer repoReq.Body.Close()
+
+	var repos []Repo
+	if err := json.NewDecoder(repoReq.Body).Decode(&repos); err != nil {
+		log.Fatalf("Error unmarshalling JSON: %v", err)
+	}
+
+	// Write header
+	os.Stdin.Write([]byte("# GitHub Repositories"))
+
+	utils.NewDirectory()
+	ErrMovingDirectory := os.Chdir(utils.TemporaryDirectory)
+	if ErrMovingDirectory != nil {
+		log.Fatal(ErrMovingDirectory)
+		return
+	}
+
+	// Write out each repo as it's processed
+	for _, repo := range repos {
+		if repo.Name != userName {
+			os.Stdin.Write([]byte("Name: " + repo.Name + "\n"))
+			os.Stdin.Write([]byte("Description: " + repo.Description + "\n"))
+			os.Stdin.Write([]byte("URL: " + repo.Url + "\n\n"))
+
+			cmd := exec.Command("git", "clone", "--depth", "1", repo.Url)
+			var stderr bytes.Buffer
+			cmd.Stderr = &stderr
+
+			err := cmd.Run()
+			if err != nil {
+				log.Printf("Error: %s\n", stderr.String())
+				return
+			}
+
+		}
+	}
 }
