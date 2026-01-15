@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -12,7 +13,7 @@ import (
 	"strings"
 
 	aphrodite "github.com/jonathon-chew/Aphrodite"
-	utils "github.com/jonathon-chew/Thoth/Utils"
+	utils "github.com/jonathon-chew/Thoth/utils"
 )
 
 var HTTPStatusResponseMeanings = map[string]string{
@@ -31,6 +32,8 @@ type Credentials struct {
 	Repo  string
 	Token string
 }
+
+// type CommitMap map[string]int
 
 // UTILS
 func GetRemoteOrigin() (string, error) {
@@ -407,4 +410,38 @@ func CheckForGitUpdate(entry string) error {
 	}
 
 	return nil
+}
+
+func MakeCommitMap() {
+
+	root := "." // You can make this configurable
+	repos := utils.FindGitRepos(root)
+
+	totalCommits := make(utils.CommitMap)
+	for _, repo := range repos {
+		// fmt.Println("Scanning:", repo)
+		commits := getCommitDates(repo)
+		for date, count := range commits {
+			totalCommits[date] += count
+		}
+	}
+
+	utils.RenderDateGraph(totalCommits)
+}
+
+func getCommitDates(repo string) utils.CommitMap {
+	cmd := exec.Command("git", "log", "--pretty=format:%ad", "--date=short")
+	cmd.Dir = repo
+	out, err := cmd.Output()
+	if err != nil {
+		fmt.Println("Error reading commits from", repo, err)
+		return nil
+	}
+	commits := make(utils.CommitMap)
+	scanner := bufio.NewScanner(strings.NewReader(string(out)))
+	for scanner.Scan() {
+		date := scanner.Text()
+		commits[date]++
+	}
+	return commits
 }

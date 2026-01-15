@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	aphrodite "github.com/jonathon-chew/Aphrodite"
-	utils "github.com/jonathon-chew/Thoth/Utils"
 	"github.com/jonathon-chew/Thoth/git"
+	utils "github.com/jonathon-chew/Thoth/utils"
 )
 
 func CLI(CommandLineArguments []string) error {
@@ -18,16 +18,18 @@ func CLI(CommandLineArguments []string) error {
 
 	for index, command := range CommandLineArguments {
 		switch command {
+		case "--commit-calendar", "--cc", "-cc":
+			git.MakeCommitMap()
+			return nil
+
 		case "--check", "-c":
 			entries := utils.MakeDirectoryList(utils.FindFilesInCurrentDirectory())
 
 			for _, entry := range entries {
-
 				ErrCheckingForUpdate := git.CheckForGitUpdate(entry)
 				if ErrCheckingForUpdate != nil {
 					return ErrCheckingForUpdate
 				}
-
 			}
 
 		case "--get", "-get", "-g":
@@ -103,7 +105,7 @@ func CLI(CommandLineArguments []string) error {
 		case "--help", "-help", "-h":
 
 			aphrodite.PrintBold("Cyan", "No Arguments\n")
-			aphrodite.PrintColour("Green", "You can run with no arguments to check all the files in the current directory\n\n")
+			aphrodite.PrintColour("Green", "You can run with no arguments to check all the files in the current directory for any undocumented todos and upload them to github\n\n")
 
 			aphrodite.PrintBold("Cyan", "Get issues\n")
 			aphrodite.PrintColour("Green", "You can pass in a get flag which will List the github issues, this can be supplimented with --open and --closed to filter to show only issues with those flags\n\n")
@@ -128,6 +130,9 @@ func CLI(CommandLineArguments []string) error {
 
 			aphrodite.PrintBold("cyan", "--check\n")
 			aphrodite.PrintColour("Green", "Check all folders 1 level deep to see if there are any updates required to push/pull\n\n")
+
+			aphrodite.PrintBold("cyan", "Commit Calendar")
+			aphrodite.PrintColour("Green", "Print to the terminal the git history activity for the last year!\n\n")
 
 		case "--tags", "-tags", "-t", "--tag", "-tag":
 			version, ErrGetLatestTag := git.GetLatestTag()

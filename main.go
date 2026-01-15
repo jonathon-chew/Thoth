@@ -8,9 +8,9 @@ import (
 	"slices"
 	"strings"
 
-	utils "github.com/jonathon-chew/Thoth/Utils"
 	"github.com/jonathon-chew/Thoth/cmd"
 	"github.com/jonathon-chew/Thoth/git"
+	utils "github.com/jonathon-chew/Thoth/utils"
 )
 
 func main() {
