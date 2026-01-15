@@ -416,6 +416,7 @@ func MakeCommitMap() {
 
 	root := "." // You can make this configurable
 	repos := utils.FindGitRepos(root)
+	var totalCount int
 
 	totalCommits := make(utils.CommitMap)
 	for _, repo := range repos {
@@ -423,9 +424,11 @@ func MakeCommitMap() {
 		commits := getCommitDates(repo)
 		for date, count := range commits {
 			totalCommits[date] += count
+			totalCount += count
 		}
 	}
 
+	aphrodite.PrintInfo("Total Count: " + strconv.Itoa(totalCount) + "\n")
 	utils.RenderDateGraph(totalCommits)
 }
 
