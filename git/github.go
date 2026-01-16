@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	utils "github.com/jonathon-chew/Thoth/utils"
+	utils "github.com/jonathon-chew/Thoth/Utils"
 )
 
 // GITHUB STRUCTS
