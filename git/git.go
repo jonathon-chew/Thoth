@@ -412,7 +412,7 @@ func CheckForGitUpdate(entry string) error {
 	return nil
 }
 
-func MakeCommitMap() {
+func MakeCommitMap(option string) {
 
 	root := "." // You can make this configurable
 	repos := utils.FindGitRepos(root)
@@ -429,7 +429,7 @@ func MakeCommitMap() {
 	}
 
 	aphrodite.PrintInfo("Total Count: " + strconv.Itoa(totalCount) + "\n")
-	utils.RenderDateGraph(totalCommits)
+	utils.RenderDateGraph(totalCommits, option)
 }
 
 func getCommitDates(repo string) utils.CommitMap {

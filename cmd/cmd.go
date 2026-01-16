@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -19,7 +20,12 @@ func CLI(CommandLineArguments []string) error {
 	for index, command := range CommandLineArguments {
 		switch command {
 		case "--commit-calendar", "--cc", "-cc":
-			git.MakeCommitMap()
+			var option string
+			if len(CommandLineArguments) > index+1 {
+				option = CommandLineArguments[index+1]
+				log.Print(option)
+			}
+			git.MakeCommitMap(option)
 			return nil
 
 		case "--check", "-c":
@@ -104,7 +110,7 @@ func CLI(CommandLineArguments []string) error {
 			return nil
 
 		case "--version", "-version", "-v":
-			fmt.Printf("v0.7.0\n")
+			fmt.Printf("v0.7.1\n")
 
 		case "--help", "-help", "-h":
 
