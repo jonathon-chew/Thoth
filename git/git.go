@@ -142,64 +142,57 @@ func GetLatestTag() (string, error) {
 
 	// If the list is only 1 item long it's the biggest, so early return
 	if len(versionList) == 1 {
-		return versions, nil
+		return versionList[0], nil
 	}
 
 	var biggestMajor, biggestMinor, biggestPatch int
-	possibleVersions := versionList
+	var latestVersion string
 
-	for index, version := range versionList {
+	for _, version := range versionList {
+		version = strings.TrimSpace(version)
+		if version == "" {
+			continue
+		}
 
 		if len(version) < 4 {
 			continue
 		}
 
-		if !strings.Contains(version, ".") && !strings.Contains(version, "v") {
-			fmt.Printf("[WARNING]: Skipping looking at tag %s, as doesn't follow the convention v.[0-9].[0-9].[0-9]", version)
+		if !strings.Contains(version, ".") || !strings.HasPrefix(version, "v") {
+			fmt.Printf("[WARNING]: Skipping looking at tag %s, as doesn't follow the convention v.[0-9].[0-9].[0-9]\n", version)
 			continue
-			// return "", fmt.Errorf("[ERROR] unable to find periods in the version tags")
 		}
 
-		major, ErrMajorConv := strconv.Atoi(strings.Split(version[1:], ".")[0])
-		minor, ErrMinorConv := strconv.Atoi(strings.Split(version[1:], ".")[1])
-		patch, ErrPatchConv := strconv.Atoi(strings.Split(version[1:], ".")[2])
-
-		if ErrMajorConv != nil && ErrMinorConv != nil && ErrPatchConv != nil {
-			return "", fmt.Errorf("[ERROR]: There was an error converting %s, %s, %s", strings.Split(version[1:], ".")[0], strings.Split(version[1:], ".")[1], strings.Split(version[1:], ".")[2])
+		versionParts := strings.Split(version[1:], ".")
+		if len(versionParts) < 3 {
+			continue
 		}
 
-		if major > biggestMajor {
-			possibleVersions = versionList[index:]
-		} else if major < biggestMajor {
-			possibleVersions = append(possibleVersions[:index], possibleVersions[index+1:]...)
+		major, ErrMajorConv := strconv.Atoi(versionParts[0])
+		minor, ErrMinorConv := strconv.Atoi(versionParts[1])
+		patch, ErrPatchConv := strconv.Atoi(versionParts[2])
+
+		if ErrMajorConv != nil || ErrMinorConv != nil || ErrPatchConv != nil {
+			fmt.Printf("[WARNING]: Skipping tag %s due to conversion error\n", version)
+			continue
 		}
 
-		if len(possibleVersions) == 1 {
-			return strings.Join(versionList, " "), nil
-		}
-
-		if minor > biggestMinor && slices.Contains(possibleVersions, version) {
-			possibleVersions = versionList[index:]
-		} else if minor < biggestMinor {
-			possibleVersions = append(possibleVersions[:index], possibleVersions[index+1:]...)
-		}
-
-		if len(possibleVersions) == 1 {
-			return strings.Join(versionList, " "), nil
-		}
-
-		if patch > biggestPatch {
-			possibleVersions = versionList[index:]
-		} else if patch < biggestPatch {
-			possibleVersions = append(possibleVersions[:index], possibleVersions[index+1:]...)
-		}
-
-		if len(possibleVersions) == 1 {
-			return strings.Join(versionList, " "), nil
+		// Check if this version is greater than the current latest
+		if major > biggestMajor ||
+			(major == biggestMajor && minor > biggestMinor) ||
+			(major == biggestMajor && minor == biggestMinor && patch > biggestPatch) {
+			biggestMajor = major
+			biggestMinor = minor
+			biggestPatch = patch
+			latestVersion = version
 		}
 	}
 
-	return strings.Join(possibleVersions, ""), nil
+	if latestVersion == "" {
+		return "", nil
+	}
+
+	return latestVersion, nil
 }
 
 func MakeTag(newTag string) error {
