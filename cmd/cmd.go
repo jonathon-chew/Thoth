@@ -141,10 +141,10 @@ func CLI(CommandLineArguments []string) error {
 			aphrodite.PrintBold("cyan", "Check\n")
 			aphrodite.PrintColour("Green", "Check all folders 1 level deep to see if there are any updates required to push/pull\n\n")
 
-			aphrodite.PrintBold("cyan", "Commit Calendar")
+			aphrodite.PrintBold("cyan", "Commit Calendar\n")
 			aphrodite.PrintColour("Green", "Print to the terminal the git history activity for the last year!\n\n")
 
-			aphrodite.PrintBold("cyan", "Clone")
+			aphrodite.PrintBold("cyan", "Clone\n")
 			aphrodite.PrintColour("Green", "Clone all public repos into a temporary directory\n\n")
 
 		case "--tags", "-tags", "-t", "--tag", "-tag":
